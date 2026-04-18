@@ -48,7 +48,7 @@ export default function Process() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 md:py-28 bg-slate-50">
+    <section ref={sectionRef} className="w-full py-20 md:py-28 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -64,7 +64,7 @@ export default function Process() {
               transition={{ duration: 0.6, ease: 'easeOut' }}
               className="text-3xl md:text-5xl font-display font-bold text-gray-900 mb-4"
             >
-              De 0 à <span className="gradient-text">livré</span> en 5 jours
+              Votre site vitrine, livré en <span className="gradient-text">5 jours ouvrés</span>
             </motion.h2>
           </div>
           <p className="text-gray-600 text-lg">Une méthode éprouvée, sans surprise.</p>

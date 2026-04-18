@@ -48,7 +48,7 @@ function Stars({ note }) {
 
 export default function Avis() {
   return (
-    <section className="py-20 md:py-28 bg-[#0A0F1E]">
+    <section className="w-full py-20 md:py-28 bg-[#0A0F1E]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

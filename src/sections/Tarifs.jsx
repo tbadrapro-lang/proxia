@@ -68,7 +68,7 @@ export default function Tarifs() {
   };
 
   return (
-    <section className="relative py-20 md:py-28 bg-[#0F172A] overflow-hidden">
+    <section className="w-full relative py-20 md:py-28 bg-[#0F172A] overflow-hidden">
       <div className="absolute -top-40 -left-40 w-80 h-80 bg-violet-600/20 rounded-full blur-[128px]" />
       <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-amber-500/10 rounded-full blur-[128px]" />
 
@@ -181,7 +181,7 @@ export default function Tarifs() {
                     'Agent IA': 'Agent IA — 100€/mois',
                   };
                   localStorage.setItem('proxia_pack', packMap[plan.name] || plan.name);
-                  scrollTo('reservation');
+                  scrollTo('contact');
                 }}
                 className={`w-full py-3 text-center rounded-xl text-sm font-semibold transition-colors ${
                   plan.highlighted

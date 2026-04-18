@@ -85,7 +85,7 @@ export default function Services() {
   const ActiveMockup = MockupComponents[active.mockup];
 
   return (
-    <section className="py-20 md:py-28 bg-white">
+    <section className="w-full py-20 md:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -174,7 +174,7 @@ export default function Services() {
               </ul>
 
               <RippleButton
-                onClick={() => scrollTo('#reservation')}
+                onClick={() => scrollTo('contact')}
                 className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/30 transition-colors"
               >
                 Choisir ce pack →

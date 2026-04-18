@@ -223,7 +223,7 @@ export default function Hero() {
             Voir nos services
           </RippleButton>
           <RippleButton
-            onClick={() => scrollTo('reservation')}
+            onClick={() => scrollTo('contact')}
             className="holo-card text-white font-bold px-8 py-4 rounded-2xl text-lg border border-amber-400/50 hover:border-amber-400"
           >
             <span className="gradient-text">Réserver un appel gratuit</span>

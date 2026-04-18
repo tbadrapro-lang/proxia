@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { X } from "lucide-react";
 
 const scrollTo = (id) => {
   const el = document.getElementById(id);
@@ -9,8 +10,6 @@ const scrollTo = (id) => {
     window.location.href = `/#${id}`;
   }
 };
-
-const MENTIONS = `Proxia IA — Agence digitale. Siège : Île-de-France. Contact : tbadrapro@gmail.com · 06 74 31 45 75. Les données collectées via le formulaire de contact sont utilisées uniquement pour vous recontacter (RGPD). Vous pouvez exercer vos droits d'accès, de rectification et de suppression en nous contactant par email. Hébergement : Vercel Inc., 340 Pine St, San Francisco, CA. Directeur de publication : Badra T.`;
 
 export default function Footer() {
   const [showMentions, setShowMentions] = useState(false);
@@ -28,6 +27,49 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-white/8 bg-black">
+      {/* ===== MODALE MENTIONS LÉGALES ===== */}
+      {showMentions && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowMentions(false)} />
+          <div className="relative bg-[#0F172A] border border-white/15 rounded-2xl max-w-lg w-full p-8 shadow-2xl shadow-violet-900/30 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowMentions(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+            >
+              <X size={16} />
+            </button>
+            <h3 className="text-white font-bold text-xl mb-6">Mentions légales</h3>
+            <div className="space-y-4 text-sm text-white/60 leading-relaxed">
+              <div>
+                <p className="text-white/80 font-semibold mb-1">Éditeur du site</p>
+                <p>Proxia IA — Badra Traoré</p>
+                <p>Adresse : Clichy, 92110</p>
+                <p>Email : <a href="mailto:tbadrapro@gmail.com" className="text-violet-400 hover:underline">tbadrapro@gmail.com</a></p>
+                <p>Tél : <a href="tel:+33674314575" className="text-violet-400 hover:underline">06 74 31 45 75</a></p>
+              </div>
+              <div>
+                <p className="text-white/80 font-semibold mb-1">Hébergement</p>
+                <p>Vercel Inc. — 340 Pine Street, Suite 1, San Francisco, CA 94104, USA</p>
+                <p>Site : <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">vercel.com</a></p>
+              </div>
+              <div>
+                <p className="text-white/80 font-semibold mb-1">Données personnelles (RGPD)</p>
+                <p>Les données collectées via le formulaire de contact (nom, email, téléphone) sont utilisées uniquement pour vous recontacter. Elles ne sont transmises à aucun tiers. Vous pouvez exercer vos droits d'accès, de rectification et de suppression en écrivant à tbadrapro@gmail.com.</p>
+              </div>
+              <div>
+                <p className="text-white/80 font-semibold mb-1">Propriété intellectuelle</p>
+                <p>Tous les contenus de ce site (textes, images, logo) sont la propriété de Proxia IA et ne peuvent être reproduits sans autorisation écrite.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowMentions(false)}
+              className="mt-6 w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl transition-colors text-sm"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
       {/* CTA Banner */}
       <div className="bg-gradient-to-r from-violet-900/40 to-indigo-900/30 border-b border-violet-500/15">
         <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -165,16 +207,6 @@ export default function Footer() {
             </li>
           </ul>
 
-          {/* Mentions légales inline */}
-          {showMentions && (
-            <div className="mt-4 p-4 bg-white/3 border border-white/10 rounded-xl">
-              <p className="text-white/40 text-[11px] leading-relaxed">{MENTIONS}</p>
-              <button onClick={() => setShowMentions(false)}
-                className="mt-2 text-violet-400 text-xs hover:underline">
-                Fermer
-              </button>
-            </div>
-          )}
 
           {/* Badge confiance */}
           <div className="mt-6 p-4 bg-white/3 border border-white/8 rounded-xl">

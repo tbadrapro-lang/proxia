@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
-import { Send, Phone, Mail, Calendar } from 'lucide-react';
+import { Send, Phone, Mail, Calendar, CheckCircle } from 'lucide-react';
 import RippleButton from '../components/RippleButton';
 
 const CALENDLY_URL = 'https://calendly.com/tbadrapro/appel-decouverte-gratuit';
@@ -18,6 +18,8 @@ export default function Contact() {
   const [form, setForm] = useState(initialFull);
   const [sendingQuick, setSendingQuick] = useState(false);
   const [sendingFull, setSendingFull] = useState(false);
+  const [quickSent, setQuickSent] = useState(false);
+  const [fullSent, setFullSent] = useState(false);
 
   const updateQuick = (field, value) => setQuick(prev => ({ ...prev, [field]: value }));
   const updateFull = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -40,6 +42,7 @@ export default function Contact() {
       }, 'fMP5Tbm2p8wc6qQlM');
       toast.success(`Parfait ${quick.prenom} ! On vous rappelle aujourd\u0027hui 🎯`);
       setQuick(initialQuick);
+      setQuickSent(true);
     } catch {
       toast.error('Erreur. Appelez-nous au 06 74 31 45 75');
     } finally {
@@ -65,6 +68,7 @@ export default function Contact() {
       }, 'fMP5Tbm2p8wc6qQlM');
       toast.success('Demande envoyée ! On vous contacte sous 24h.');
       setForm(initialFull);
+      setFullSent(true);
     } catch {
       toast.error('Erreur. Contactez-nous sur tbadrapro@gmail.com');
     } finally {
@@ -73,14 +77,15 @@ export default function Contact() {
   };
 
   const inputClass = 'w-full px-4 py-3 bg-white/10 border border-white/20 text-white placeholder-white/40 focus:border-violet-400 focus:outline-none rounded-xl text-sm transition-colors';
-  const selectClass = `${inputClass} [&>option]:bg-[#1e1b4b] [&>option]:text-white`;
+  const selectClass = 'w-full px-4 py-3 bg-zinc-900 text-white border border-white/20 focus:border-violet-400 focus:outline-none rounded-xl text-sm transition-colors [&>option]:bg-zinc-900 [&>option]:text-white';
 
   return (
-    <section className="relative py-20 md:py-28 bg-[#0F172A] overflow-hidden">
+    <section className="w-full relative py-20 md:py-28 bg-[#0F172A] overflow-hidden">
       <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-600/20 rounded-full blur-[128px]" />
       <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-violet-400/10 rounded-full blur-[128px]" />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -133,6 +138,13 @@ export default function Contact() {
         >
           <h3 className="text-white font-bold text-lg mb-1 text-center">Je veux être rappelé aujourd&apos;hui</h3>
           <p className="text-gray-400 text-xs text-center mb-5">3 champs, 10 secondes, on vous rappelle.</p>
+
+          {quickSent && (
+            <div className="flex items-center gap-3 bg-green-500/15 border border-green-500/30 rounded-xl px-4 py-3 mb-4">
+              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <p className="text-green-400 text-sm font-medium">Message reçu ! On vous rappelle aujourd'hui.</p>
+            </div>
+          )}
 
           <form onSubmit={handleQuickSubmit} className="space-y-3">
             <motion.input
@@ -194,6 +206,20 @@ export default function Contact() {
         </div>
 
         {/* ===== FULL FORM ===== */}
+        {fullSent && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 bg-green-500/15 border border-green-500/30 rounded-xl px-5 py-4 mb-6"
+          >
+            <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
+            <div>
+              <p className="text-green-400 font-bold text-sm">Demande envoyée avec succès !</p>
+              <p className="text-green-400/70 text-xs mt-0.5">On vous contacte sous 24h — vérifiez vos emails.</p>
+            </div>
+          </motion.div>
+        )}
+
         <motion.form
           onSubmit={handleFullSubmit}
           initial={{ opacity: 0, y: 20 }}
@@ -246,6 +272,7 @@ export default function Contact() {
             )}
           </motion.button>
         </motion.form>
+      </div>
       </div>
     </section>
   );

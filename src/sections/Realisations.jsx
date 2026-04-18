@@ -88,7 +88,7 @@ const scrollToContact = () => {
 
 export default function Realisations() {
   return (
-    <section id="realisations" className="py-20 md:py-28 bg-[#0F172A]">
+    <section id="realisations" className="w-full py-20 md:py-28 bg-[#0F172A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

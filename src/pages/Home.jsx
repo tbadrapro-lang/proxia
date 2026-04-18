@@ -14,6 +14,7 @@ import Contact from '../sections/Contact';
 import Footer from '../components/Footer';
 import AvatarKone from '../components/AvatarKone';
 import StickyMobileCTA from '../components/StickyMobileCTA';
+import ScrollToTop from '../components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 
 export default function Home() {
@@ -37,6 +38,7 @@ export default function Home() {
       <Footer />
       <AvatarKone />
       <StickyMobileCTA />
+      <ScrollToTop />
       <Toaster position="bottom-right" />
     </>
   );

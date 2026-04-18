@@ -51,7 +51,7 @@ export default function PourQui() {
   };
 
   return (
-    <section id="pour-qui" className="py-20 md:py-28 relative overflow-hidden"
+    <section id="pour-qui" className="w-full py-20 md:py-28 relative overflow-hidden"
       style={{ background: 'linear-gradient(180deg, #0F172A 0%, #1E1040 100%)' }}>
       <div className="cyber-grid" />
 
