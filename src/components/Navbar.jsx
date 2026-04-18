@@ -165,13 +165,16 @@ export default function Navbar() {
               06 74 31 45 75
             </a>
 
-            {/* Bouton RDV → ancre #contact */}
-            <RippleButton
-              onClick={() => handleNavClick('contact')}
-              className="bg-amber-400 hover:bg-amber-500 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors"
+            {/* Bouton RDV → Calendly */}
+            <a
+              href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Réserver un appel
-            </RippleButton>
+              <RippleButton className="bg-amber-400 hover:bg-amber-500 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">
+                Réserver un appel
+              </RippleButton>
+            </a>
           </div>
 
           {/* Hamburger mobile */}
@@ -239,12 +242,16 @@ export default function Navbar() {
                   >
                     <Phone size={14} /> 06 74 31 45 75
                   </a>
-                  <RippleButton
-                    onClick={() => handleNavClick('contact')}
-                    className="bg-amber-400 text-white text-sm font-semibold px-4 py-2.5 rounded-full w-full"
+                  <a
+                    href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
                   >
-                    Réserver un appel gratuit
-                  </RippleButton>
+                    <RippleButton className="bg-amber-400 text-white text-sm font-semibold px-4 py-2.5 rounded-full w-full">
+                      Réserver un appel gratuit
+                    </RippleButton>
+                  </a>
                 </div>
 
               </div>

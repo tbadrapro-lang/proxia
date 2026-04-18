@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
-import { Send, Phone, Mail } from 'lucide-react';
+import { Send, Phone, Mail, Calendar } from 'lucide-react';
 import RippleButton from '../components/RippleButton';
+
+const CALENDLY_URL = 'https://calendly.com/tbadrapro/appel-decouverte-gratuit';
 
 const initialQuick = { prenom: '', phone: '', commerce: '' };
 const initialFull = {
@@ -102,13 +104,24 @@ export default function Contact() {
           </div>
 
           {/* Badge pulse */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full mb-4">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
             </span>
             <span className="text-green-400 text-xs font-medium">Répond en moins de 2h</span>
           </div>
+
+          {/* Bouton Calendly */}
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/25"
+          >
+            <Calendar className="w-4 h-4" />
+            Prendre RDV gratuit — Calendly
+          </a>
         </motion.div>
 
         {/* ===== QUICK FORM — "Je veux être rappelé" ===== */}

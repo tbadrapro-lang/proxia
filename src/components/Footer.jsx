@@ -36,12 +36,14 @@ export default function Footer() {
             <p className="text-white/50 text-sm">Site livré en 5 jours ouvrés. Devis gratuit sous 24h.</p>
           </div>
           <div className="flex gap-3 flex-shrink-0">
-            <button
-              onClick={() => handleAnchor('contact')}
+            <a
+              href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
             >
               Prendre RDV gratuitement →
-            </button>
+            </a>
             <a
               href="https://wa.me/33674314575"
               target="_blank"
@@ -127,10 +129,14 @@ export default function Footer() {
               </button>
             </li>
             <li>
-              <button onClick={() => handleAnchor('contact')}
-                className="text-white/40 hover:text-violet-400 text-sm transition-colors text-left">
-                Prendre RDV
-              </button>
+              <a
+                href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/40 hover:text-violet-400 text-sm transition-colors"
+              >
+                Prendre RDV — Calendly
+              </a>
             </li>
           </ul>
         </div>
