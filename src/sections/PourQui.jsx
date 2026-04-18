@@ -10,7 +10,7 @@ const sectors = [
     accroche: '3x plus de réservations en ligne',
     description: 'Site avec menu, prise de réservation automatique, gestion des avis Google — votre restaurant visible avant vos concurrents.',
     cta: 'Découvrir le pack Restaurant',
-    scrollTarget: 'reservation',
+    scrollTarget: 'contact',
   },
   {
     icon: Scissors,
@@ -19,7 +19,7 @@ const sectors = [
     accroche: "Zéro appel manqué grâce à l'IA",
     description: 'Agent vocal qui prend les RDV 24h/24. Plus jamais un client perdu. Intégration avec votre agenda existant.',
     cta: 'Découvrir le pack Salon',
-    scrollTarget: 'reservation',
+    scrollTarget: 'contact',
   },
   {
     icon: Wrench,
@@ -28,7 +28,7 @@ const sectors = [
     accroche: 'Devis automatiques en 2 minutes',
     description: 'Formulaire de devis IA, relances clients, site vitrine professionnel. Concentrez-vous sur votre métier.',
     cta: 'Découvrir le pack Garage',
-    scrollTarget: 'reservation',
+    scrollTarget: 'contact',
   },
   {
     icon: Home,
@@ -37,7 +37,7 @@ const sectors = [
     accroche: 'Qualification de prospects automatique',
     description: 'Descriptions générées par IA, chatbot qualification, automatisation des relances mandats.',
     cta: 'Découvrir le pack Immo',
-    scrollTarget: 'reservation',
+    scrollTarget: 'contact',
   },
 ];
 

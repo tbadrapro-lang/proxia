@@ -3,7 +3,7 @@ import { Send, Bot, User, Sparkles } from 'lucide-react';
 
 const API_KEY = 'AIzaSyApzkyeI2GsaNSLM3W8xdfw7bOVl5lAP9c';
 
-const SYSTEM_PROMPT = `Tu es Koné, assistant business de Badra Traoré, fondateur de Proxia.
+const SYSTEM_PROMPT = `Tu es Proxia Assistant, l'assistant business de Badra Traoré, fondateur de Proxia.
 Proxia est une agence IA pour commerçants locaux à Clichy/Île-de-France.
 Tu aides Badra à gérer son activité : rédiger des devis, préparer des scripts de prospection, gérer ses clients, analyser son CA, préparer ses relances.
 Tu connais ses packs : Visibilité 350€, Efficacité 600€, Agent IA 100€/mois.
@@ -21,7 +21,7 @@ export default function AssistantIA({ crm }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Salut Badra ! Je suis Koné, ton assistant business Proxia. Je peux t'aider à prospecter, rédiger des devis, préparer tes relances ou analyser ton activité. Comment je peux t'aider aujourd'hui ?",
+      content: "Salut Badra ! Je suis Proxia Assistant, ton IA business. Je peux t'aider à prospecter, rédiger des devis, préparer tes relances ou analyser ton activité. Comment je peux t'aider aujourd'hui ?",
     },
   ]);
   const [input, setInput] = useState('');
@@ -86,8 +86,8 @@ export default function AssistantIA({ crm }) {
           <Bot size={18} className="text-white" />
         </div>
         <div>
-          <h1 className="font-bold text-gray-900">Koné</h1>
-          <p className="text-xs text-gray-500">Assistant business Proxia · Powered by Gemini</p>
+          <h1 className="font-bold text-gray-900">Proxia Assistant</h1>
+          <p className="text-xs text-gray-500">Assistant business IA · Powered by Gemini</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -161,7 +161,7 @@ export default function AssistantIA({ crm }) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Message à Koné... (Entrée pour envoyer)"
+            placeholder="Message à Proxia Assistant... (Entrée pour envoyer)"
             rows={1}
             className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 max-h-32"
             style={{ minHeight: '44px' }}

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Eye, Copy, Trash2 } from 'lucide-react';
+import { Plus, X, Eye, Copy, Trash2, Search } from 'lucide-react';
 import { formatDate } from '../utils/crm';
+import { supabase } from '../lib/supabaseClient';
 
 // TODO: remplacer par vrais liens Stripe production au 1er client
 const STRIPE_LINKS = {
@@ -140,6 +141,51 @@ export default function Devis({ crm }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [preview, setPreview] = useState(null);
   const [copied, setCopied] = useState(null);
+  const [clientQuery, setClientQuery] = useState('');
+  const [clientSuggestions, setClientSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    if (clientQuery.length < 2) { setClientSuggestions([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('clients')
+        .select('id, nom, prenom, email, telephone, adresse, entreprise')
+        .ilike('nom', `%${clientQuery}%`)
+        .limit(6);
+      setClientSuggestions(data || []);
+      setShowSuggestions(true);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [clientQuery]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selectClient = (c) => {
+    const nom = `${c.nom}${c.prenom ? ' ' + c.prenom : ''}`;
+    setClientQuery(nom);
+    setForm(p => ({
+      ...p,
+      clientNom: nom,
+      clientEmail: c.email || '',
+      clientCommerce: c.entreprise || '',
+      clientVille: c.adresse || '',
+    }));
+    setShowSuggestions(false);
+  };
+
+  const resetModal = () => {
+    setShowModal(false);
+    setClientQuery('');
+    setForm(EMPTY_FORM);
+  };
 
   const total = calcTotal(form.lignes);
 
@@ -155,8 +201,7 @@ export default function Devis({ crm }) {
   const handleCreate = () => {
     if (!form.clientNom) return;
     addDevis({ ...form, total, sousTotal: total, tva: 0 });
-    setForm(EMPTY_FORM);
-    setShowModal(false);
+    resetModal();
   };
 
   const copyStripeLink = (d) => {
@@ -255,11 +300,47 @@ export default function Devis({ crm }) {
                 {/* Client info */}
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-3">Informations client</p>
+
+                  {/* Autocomplete client */}
+                  <div ref={searchRef} className="relative mb-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Rechercher un client existant</label>
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Tapez un nom pour rechercher..."
+                        value={clientQuery}
+                        onChange={e => { setClientQuery(e.target.value); setForm(p => ({ ...p, clientNom: e.target.value })); }}
+                        onFocus={() => clientSuggestions.length > 0 && setShowSuggestions(true)}
+                        className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                    </div>
+                    <AnimatePresence>
+                      {showSuggestions && clientSuggestions.length > 0 && (
+                        <motion.ul
+                          initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                          className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden"
+                        >
+                          {clientSuggestions.map(c => (
+                            <li key={c.id}>
+                              <button type="button" onClick={() => selectClient(c)}
+                                className="w-full text-left px-4 py-2.5 hover:bg-violet-50 transition-colors border-b border-gray-50 last:border-0"
+                              >
+                                <p className="text-sm font-medium text-gray-900">{c.nom} {c.prenom}</p>
+                                {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
+                              </button>
+                            </li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { label: 'Nom *', key: 'clientNom' },
+                      { label: 'Nom client *', key: 'clientNom' },
                       { label: 'Email', key: 'clientEmail' },
-                      { label: 'Commerce', key: 'clientCommerce' },
+                      { label: 'Commerce / Entreprise', key: 'clientCommerce' },
                       { label: 'Ville', key: 'clientVille' },
                     ].map(f => (
                       <div key={f.key}>
@@ -333,7 +414,7 @@ export default function Devis({ crm }) {
                 </div>
               </div>
               <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button onClick={() => setShowModal(false)}
+                <button onClick={resetModal}
                   className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
                 >Annuler</button>
                 <button onClick={handleCreate} disabled={!form.clientNom}

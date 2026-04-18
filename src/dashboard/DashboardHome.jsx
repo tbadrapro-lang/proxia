@@ -1,4 +1,4 @@
-import { Users, FileText, Clock, Euro } from 'lucide-react';
+import { Users, FileText, Clock, Euro, Calendar, ExternalLink } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatDate, STATUT_LEAD_COLORS, STATUT_LEAD_LABELS } from '../utils/crm';
 
@@ -56,9 +56,21 @@ export default function DashboardHome({ crm }) {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Bonjour Badra 👋</h1>
-        <p className="text-gray-500 text-sm mt-1">Voici un résumé de ton activité Proxia</p>
+      <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Bonjour Badra 👋</h1>
+          <p className="text-gray-500 text-sm mt-1">Voici un résumé de ton activité Proxia</p>
+        </div>
+        <a
+          href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+        >
+          <Calendar size={15} />
+          Planifier un appel client
+          <ExternalLink size={12} className="opacity-70" />
+        </a>
       </div>
 
       {/* KPI Cards */}

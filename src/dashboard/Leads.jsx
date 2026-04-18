@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Phone, MessageCircle, UserCheck, ChevronRight, AlertCircle, Upload, RefreshCw } from 'lucide-react';
+import { Plus, X, Phone, MessageCircle, UserCheck, ChevronRight, AlertCircle, Upload, RefreshCw, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { formatDate, addDays, isOverdue, STATUT_LEAD_COLORS, STATUT_LEAD_LABELS } from '../utils/crm';
@@ -53,7 +53,7 @@ function RelanceBadge({ dateAjout, statut }) {
   return null;
 }
 
-export default function Leads() {
+export default function Leads({ crm }) {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -132,6 +132,7 @@ export default function Leads() {
     else { toast.success('Lead supprimé'); setSelected(null); }
   };
 
+  // Lead → Client (via Supabase)
   const handleConvert = async (lead) => {
     const { error } = await supabase.from('clients').insert({
       nom: lead.nom,
@@ -140,12 +141,30 @@ export default function Leads() {
       adresse: lead.ville,
       statut: 'actif',
     });
-    if (error) {
-      toast.error('Erreur conversion : ' + error.message);
-      return;
-    }
+    if (error) { toast.error('Erreur conversion : ' + error.message); return; }
     await supabase.from('leads').update({ status: 'converti' }).eq('id', lead.id);
     toast.success('✅ Lead converti en client !');
+    setSelected(null);
+  };
+
+  // Lead → Prospect (crm hook localStorage + Supabase status)
+  const handleConvertToProspect = async (lead) => {
+    await supabase.from('leads').update({ status: 'rdv_planifié' }).eq('id', lead.id);
+    if (crm?.addProspect) {
+      crm.addProspect({
+        nom: lead.nom,
+        commerce: lead.commerce,
+        ville: lead.ville,
+        telephone: lead.telephone,
+        email: lead.email,
+        statut: 'rdv_planifié',
+        scoreInteret: lead.score >= 70 ? 4 : lead.score >= 50 ? 3 : 2,
+        packInteresse: 'visibilité_350',
+        prochainAction: 'Appel de découverte',
+        dateProchainAction: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
+      });
+    }
+    toast.success('📋 Lead passé en prospect ! Visible dans le kanban.');
     setSelected(null);
   };
 
@@ -417,6 +436,11 @@ export default function Leads() {
                     <MessageCircle size={15} /> WhatsApp
                   </a>
                 </div>
+                <button onClick={() => handleConvertToProspect(selected)}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  <TrendingUp size={15} /> Passer en prospect
+                </button>
                 <button onClick={() => handleConvert(selected)}
                   className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 >
