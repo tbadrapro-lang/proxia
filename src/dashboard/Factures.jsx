@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, CheckCircle, Clock, AlertTriangle, Euro } from 'lucide-react';
+import { Plus, X, CheckCircle, Clock, AlertTriangle, Euro, Search } from 'lucide-react';
 import { formatDate, isOverdue, STATUT_FACTURE_COLORS } from '../utils/crm';
+import { supabase } from '../lib/supabaseClient';
 
 const EMPTY_FORM = {
-  clientNom: '', montant: '', modePaiement: 'stripe', notes: '',
+  clientNom: '', clientId: null, montant: '', modePaiement: 'stripe', notes: '',
 };
 
 const MODES = [
@@ -18,6 +19,38 @@ export default function Factures({ crm }) {
   const { factures, addFacture, marquerPayee } = crm;
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [clientQuery, setClientQuery] = useState('');
+  const [clientSuggestions, setClientSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
+  // Recherche clients Supabase avec debounce
+  useEffect(() => {
+    if (clientQuery.length < 2) { setClientSuggestions([]); return; }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from('clients')
+        .select('id, nom, prenom, email, telephone, adresse')
+        .ilike('nom', `%${clientQuery}%`)
+        .limit(6);
+      setClientSuggestions(data || []);
+      setShowSuggestions(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [clientQuery]);
+
+  // Fermer suggestions au clic extérieur
+  useEffect(() => {
+    const handler = (e) => { if (searchRef.current && !searchRef.current.contains(e.target)) setShowSuggestions(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selectClient = (client) => {
+    setForm(p => ({ ...p, clientNom: `${client.nom}${client.prenom ? ' ' + client.prenom : ''}`, clientId: client.id }));
+    setClientQuery(`${client.nom}${client.prenom ? ' ' + client.prenom : ''}`);
+    setShowSuggestions(false);
+  };
 
   const totalPayé = factures.filter(f => f.statut === 'payée').reduce((s, f) => s + (f.montant || 0), 0);
   const totalAttente = factures.filter(f => f.statut === 'en_attente').reduce((s, f) => s + (f.montant || 0), 0);
@@ -149,17 +182,52 @@ export default function Factures({ crm }) {
                 <button onClick={() => setShowModal(false)}><X size={20} className="text-gray-400" /></button>
               </div>
               <div className="p-6 space-y-4">
-                {[
-                  { label: 'Client *', key: 'clientNom', type: 'text' },
-                  { label: 'Montant (€) *', key: 'montant', type: 'number' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                    <input type={f.type} value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                {/* Autocomplete client */}
+                <div ref={searchRef} className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
+                  <div className="relative">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher un client existant…"
+                      value={clientQuery}
+                      onChange={e => { setClientQuery(e.target.value); setForm(p => ({ ...p, clientNom: e.target.value, clientId: null })); }}
+                      onFocus={() => clientSuggestions.length > 0 && setShowSuggestions(true)}
+                      className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
                   </div>
-                ))}
+                  <AnimatePresence>
+                    {showSuggestions && clientSuggestions.length > 0 && (
+                      <motion.ul
+                        initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                        className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden"
+                      >
+                        {clientSuggestions.map(c => (
+                          <li key={c.id}>
+                            <button
+                              type="button"
+                              onClick={() => selectClient(c)}
+                              className="w-full text-left px-4 py-3 hover:bg-violet-50 transition-colors border-b border-gray-50 last:border-0"
+                            >
+                              <p className="text-sm font-medium text-gray-900">{c.nom} {c.prenom}</p>
+                              {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
+                            </button>
+                          </li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                  {form.clientId && (
+                    <p className="text-xs text-green-600 mt-1">✓ Client sélectionné depuis la base</p>
+                  )}
+                </div>
+                {/* Montant */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Montant (€) *</label>
+                  <input type="number" value={form.montant} onChange={e => setForm(p => ({ ...p, montant: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mode de paiement</label>
                   <select value={form.modePaiement} onChange={e => setForm(p => ({ ...p, modePaiement: e.target.value }))}
