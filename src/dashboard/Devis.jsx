@@ -20,7 +20,7 @@ const getStripeLink = (total) => {
 
 const EMPTY_LIGNE = { description: '', quantite: 1, prixUnitaire: 0 };
 const EMPTY_FORM = {
-  clientNom: '', clientEmail: '', clientCommerce: '', clientVille: '',
+  clientNom: '', clientEmail: '', clientCommerce: '', clientVille: '', clientId: null,
   lignes: [{ ...EMPTY_LIGNE }],
   notes: '', statut: 'brouillon', signatureData: null,
 };
@@ -176,6 +176,7 @@ export default function Devis({ crm }) {
     setClientQuery(nom);
     setForm(p => ({
       ...p,
+      clientId: c.id,
       clientNom: nom,
       clientEmail: c.email || '',
       clientCommerce: c.entreprise || '',
@@ -224,7 +225,7 @@ export default function Devis({ crm }) {
 
   const handleCreate = () => {
     if (!form.clientNom) return;
-    addDevis({ ...form, total, sousTotal: total, tva: 0, signatureData: form.signatureData });
+    addDevis({ ...form, client_id: form.clientId, total, sousTotal: total, tva: 0, signatureData: form.signatureData });
     resetModal();
   };
 
@@ -348,15 +349,15 @@ export default function Devis({ crm }) {
                       {showSuggestions && clientSuggestions.length > 0 && (
                         <motion.ul
                           initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                          className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden"
+                          className="absolute z-20 w-full bg-gray-800 border border-purple-500 rounded-xl shadow-lg mt-1 overflow-hidden"
                         >
                           {clientSuggestions.map(c => (
                             <li key={c.id}>
                               <button type="button" onClick={() => selectClient(c)}
-                                className="w-full text-left px-4 py-2.5 hover:bg-violet-50 transition-colors border-b border-gray-50 last:border-0"
+                                className="w-full text-left px-4 py-2.5 hover:bg-purple-900/50 transition-colors border-b border-gray-700/50 last:border-0"
                               >
-                                <p className="text-sm font-medium text-gray-900">{c.nom} {c.prenom}</p>
-                                {c.entreprise && <p className="text-xs text-violet-600">{c.entreprise}</p>}
+                                <p className="text-sm font-medium text-white">{c.nom} {c.prenom}</p>
+                                {c.entreprise && <p className="text-xs text-purple-300">{c.entreprise}</p>}
                                 {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
                               </button>
                             </li>

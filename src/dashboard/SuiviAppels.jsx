@@ -210,17 +210,22 @@ export default function SuiviAppels() {
 
     if (alsoToLeads && !editingId) {
       const leadPayload = {
-        nom: form.prenom_contact || form.nom_commerce,
-        commerce: form.nom_commerce,
-        ville: form.ville,
+        nom: form.nom_commerce,
         telephone: form.telephone,
-        email: '',
-        statut: form.resultat === 'rdv_fixe' ? 'rdv_planifié' : 'nouveau',
-        notes: form.notes || `Type: ${form.type_commerce} · Score Proxia: ${form.score_proxia}`,
-        source_contact: form.canal_contact,
+        ville: form.ville,
+        type_commerce: form.type_commerce,
+        canal: 'terrain',
+        score: form.score_proxia || 50,
+        statut: 'nouveau',
+        created_at: new Date().toISOString(),
       };
-      const lead = await supabase.from('leads').insert([leadPayload]);
-      if (lead.error) toast.error('Erreur ajout aux Leads'); else toast.success('Ajouté aux Leads ✅');
+      const { error: leadError } = await supabase.from('leads').insert([leadPayload]);
+      if (leadError) {
+        console.log(leadError);
+        toast.error('Erreur : ' + leadError.message);
+        return;
+      }
+      toast.success('Lead ajouté avec succès ✓');
     }
 
     setShowModal(false);
@@ -400,10 +405,10 @@ export default function SuiviAppels() {
       <AnimatePresence>
         {showModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-4 pb-4 px-4 overflow-y-auto"
             onClick={e => e.target === e.currentTarget && setShowModal(false)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8">
+              className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-y-auto max-h-[90vh] my-4">
               <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
                 <h2 className="font-bold text-gray-900 text-lg">
                   {editingId ? 'Modifier l\'appel' : 'Nouvel appel terrain'}

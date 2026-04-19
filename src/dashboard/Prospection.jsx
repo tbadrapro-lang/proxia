@@ -293,53 +293,35 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     }
   };
 
+  const extraitVille = (adresse) => {
+    if (!adresse) return '';
+    const m = adresse.match(/\d{5}\s+([^,]+)/);
+    return m ? m[1].trim() : '';
+  };
+
   const handleAddToCRM = async () => {
     if (!selected) return;
-    const services = getServicesRecommandes(selected);
-    const placeId = selected.place_id || selected.id || '';
 
-    const { data: existing, error: checkError } = await supabase
-      .from('leads')
-      .select('id')
-      .eq('place_id', placeId)
-      .maybeSingle();
-
-    if (checkError) {
-      toast.error('Erreur de connexion Supabase');
-      return;
-    }
-    if (existing) {
-      toast.error('Ce commerce est déjà dans les leads !');
-      return;
-    }
-
-    const { error } = await supabase.from('leads').insert({
+    const payload = {
       nom: selected.name,
-      type: selected.types?.[0] || '',
-      adresse: selected.formatted_address || selected.vicinity || '',
-      site_web: selected.website || '',
-      score: score,
-      note_google: selected.rating || null,
-      nb_avis: selected.user_ratings_total || 0,
-      place_id: placeId,
-      status: 'nouveau',
-      source: 'google_maps',
-      notes: [
-        `Score: ${score}/100`,
-        audit?.pack_conseille ? `Pack: ${audit.pack_conseille}` : '',
-        `${selected.rating}⭐ (${selected.user_ratings_total} avis)`,
-        services.length > 0 ? `Services: ${services.map(s => s.label).join(', ')}` : '',
-        audit?.accroche_pitch ? `Pitch: ${audit.accroche_pitch}` : '',
-      ].filter(Boolean).join(' — '),
-      audit_ia: audit ? JSON.stringify(audit) : null,
-      services_rec: services.map(s => s.label),
-    });
+      telephone: selected.formatted_phone_number || selected.international_phone_number || '',
+      ville: extraitVille(selected.formatted_address || selected.vicinity || ''),
+      type_commerce: selected.types?.[0] || 'autre',
+      canal: 'prospection_ia',
+      score: score || 50,
+      statut: 'nouveau',
+      notes: `Score Proxia: ${score} · ${selected.rating ? selected.rating + '★' : ''} · ${selected.user_ratings_total || 0} avis · ${selected.website ? 'Avec site' : '🚨 SANS SITE'} · place_id: ${selected.place_id}`,
+      created_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from('leads').insert([payload]);
 
     if (error) {
-      toast.error('Erreur lors de l\'ajout : ' + error.message);
-    } else {
-      toast.success('✅ Lead ajouté au CRM !');
+      console.log(error);
+      toast.error('Erreur : ' + error.message);
+      return;
     }
+    toast.success('Prospect ajouté au CRM ✓');
   };
 
   const handleExport = () => {

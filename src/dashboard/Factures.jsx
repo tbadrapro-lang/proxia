@@ -66,7 +66,7 @@ export default function Factures({ crm }) {
 
   const handleAdd = () => {
     if (!form.clientNom || !form.montant) return;
-    addFacture({ ...form, montant: Number(form.montant) });
+    addFacture({ ...form, client_id: form.clientId, montant: Number(form.montant) });
     setForm(EMPTY_FORM);
     setShowModal(false);
   };
@@ -200,17 +200,17 @@ export default function Factures({ crm }) {
                     {showSuggestions && clientSuggestions.length > 0 && (
                       <motion.ul
                         initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                        className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden"
+                        className="absolute z-20 w-full bg-gray-800 border border-purple-500 rounded-xl shadow-lg mt-1 overflow-hidden"
                       >
                         {clientSuggestions.map(c => (
                           <li key={c.id}>
                             <button
                               type="button"
                               onClick={() => selectClient(c)}
-                              className="w-full text-left px-4 py-3 hover:bg-violet-50 transition-colors border-b border-gray-50 last:border-0"
+                              className="w-full text-left px-4 py-3 hover:bg-purple-900/50 transition-colors border-b border-gray-700/50 last:border-0"
                             >
-                              <p className="text-sm font-medium text-gray-900">{c.nom} {c.prenom}</p>
-                              {c.entreprise && <p className="text-xs text-violet-600">{c.entreprise}</p>}
+                              <p className="text-sm font-medium text-white">{c.nom} {c.prenom}</p>
+                              {c.entreprise && <p className="text-xs text-purple-300">{c.entreprise}</p>}
                               {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
                             </button>
                           </li>
