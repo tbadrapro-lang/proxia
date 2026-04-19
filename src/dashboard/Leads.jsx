@@ -152,10 +152,9 @@ export default function Leads({ crm }) {
         .from('clients')
         .insert([{
           nom: lead.nom,
-          entreprise: lead.type_commerce || lead.commerce || null,
+          entreprise: lead.type_commerce || null,
           telephone: lead.telephone || null,
           email: null,
-          ville: lead.ville || null,
           statut: 'actif',
           notes: lead.notes || null,
         }])
