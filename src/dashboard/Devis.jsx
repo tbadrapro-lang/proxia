@@ -154,10 +154,10 @@ export default function Devis({ crm }) {
     const t = setTimeout(async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, nom, prenom, email, telephone, adresse, entreprise')
-        .or(`nom.ilike.%${clientQuery}%,prenom.ilike.%${clientQuery}%,entreprise.ilike.%${clientQuery}%,email.ilike.%${clientQuery}%`)
-        .limit(6);
-      console.log('[Devis][searchClients]', clientQuery, data, error);
+        .select('*')
+        .or(`nom.ilike.%${clientQuery}%,entreprise.ilike.%${clientQuery}%`)
+        .limit(10);
+      console.log('Clients trouvés:', data, error);
       if (error) console.error('[Devis][searchClients] error:', error);
       setClientSuggestions(data || []);
       setShowSuggestions(true);
