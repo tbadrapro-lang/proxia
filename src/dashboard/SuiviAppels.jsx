@@ -103,12 +103,20 @@ export default function SuiviAppels() {
       .from('appels')
       .select('*')
       .order('date_contact', { ascending: false });
-    if (error) { toast.error('Erreur chargement appels'); console.error(error); }
-    else setAppels(data || []);
+    if (error) { toast.error('Erreur chargement appels'); console.error(error); setLoading(false); return; }
+    const unique = Array.from(new Map((data || []).map(a => [a.id, a])).values());
+    console.log('[SuiviAppels][fetchAppels]', data?.length);
+    setAppels(unique);
     setLoading(false);
   };
 
-  useEffect(() => { fetchAppels(); }, []);
+  useEffect(() => {
+    fetchAppels();
+    const ch = supabase.channel('appels-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appels' }, () => fetchAppels())
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, []);
 
   const stats = useMemo(() => ({
     total: appels.length,
@@ -207,6 +215,17 @@ export default function SuiviAppels() {
     if (result.error) { toast.error('Erreur enregistrement'); console.error(result.error); return; }
 
     toast.success(editingId ? 'Appel mis à jour' : 'Appel enregistré ✅');
+
+    if (!editingId && form.resultat === 'rdv_fixe' && form.date_rdv) {
+      const { error: agendaError } = await supabase.from('agenda').insert([{
+        titre: `RDV - ${form.nom_commerce}`,
+        description: `Contact: ${form.prenom_contact || ''} - ${form.telephone || ''}\nNotes: ${form.notes || ''}`,
+        date_debut: new Date(form.date_rdv).toISOString(),
+        type: 'rdv',
+      }]);
+      if (agendaError) console.error('[SuiviAppels][agenda]', agendaError);
+      else toast.success("RDV ajouté à l'agenda !");
+    }
 
     if (alsoToLeads && !editingId) {
       const leadPayload = {

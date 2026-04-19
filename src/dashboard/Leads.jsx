@@ -107,23 +107,28 @@ export default function Leads({ crm }) {
 
   const handleAdd = async () => {
     if (!form.nom || !form.telephone) return;
-    const { error } = await supabase.from('leads').insert({
-      nom: form.nom,
-      type_commerce: form.type,
-      ville: form.ville,
-      telephone: form.telephone,
-      email: form.email,
-      statut: form.status,
-      notes: form.notes,
-      canal: form.source,
-    });
+    const payload = {
+      nom: (form.nom || '').trim(),
+      type_commerce: (form.type || '').trim(),
+      ville: (form.ville || '').trim(),
+      telephone: (form.telephone || '').trim(),
+      email: (form.email || '').trim(),
+      statut: (form.status || 'nouveau').trim(),
+      notes: (form.notes || '').trim(),
+      canal: (form.source || 'terrain').trim(),
+      score: parseInt(form.score) || 0,
+    };
+    console.log('[Leads][handleAdd] payload:', payload);
+    const { data, error } = await supabase.from('leads').insert(payload).select().single();
+    console.log('[Leads][handleAdd] result:', data, error);
     if (error) {
-      toast.error('Erreur lors de l\'ajout : ' + error.message);
-    } else {
-      toast.success('✅ Lead ajouté !');
-      setForm(EMPTY_FORM);
-      setShowModal(false);
+      alert('Erreur: ' + error.message + '\nCode: ' + error.code);
+      return;
     }
+    toast.success('✅ Lead ajouté !');
+    if (data) setLeads(prev => [fromDb(data), ...prev]);
+    setForm(EMPTY_FORM);
+    setShowModal(false);
   };
 
   const handleUpdate = async (id, updates) => {
@@ -143,22 +148,27 @@ export default function Leads({ crm }) {
 
   // Lead → Client (via Supabase)
   const handleConvert = async (lead) => {
-    const { error } = await supabase.from('clients').insert({
+    const { data: newClient, error } = await supabase.from('clients').insert({
       nom: lead.nom,
       telephone: lead.telephone,
       email: lead.email,
       adresse: lead.ville,
       statut: 'actif',
-    });
+      notes: lead.notes,
+    }).select().single();
+    console.log('[Leads][convert→client]', lead, newClient, error);
     if (error) { toast.error('Erreur conversion : ' + error.message); return; }
-    await supabase.from('leads').update({ statut: 'converti' }).eq('id', lead.id);
+    await supabase.from('leads').update({ statut: 'client' }).eq('id', lead.id);
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, statut: 'client' } : l));
     toast.success('✅ Lead converti en client !');
     setSelected(null);
   };
 
   // Lead → Prospect (crm hook localStorage + Supabase status)
   const handleConvertToProspect = async (lead) => {
-    await supabase.from('leads').update({ statut: 'rdv_planifié' }).eq('id', lead.id);
+    const { error } = await supabase.from('leads').update({ statut: 'qualifié' }).eq('id', lead.id);
+    console.log('[Leads][convert→prospect]', lead, error);
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, statut: 'qualifié' } : l));
     if (crm?.addProspect) {
       crm.addProspect({
         nom: lead.nom,
@@ -184,23 +194,28 @@ export default function Leads({ crm }) {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
-        const data = JSON.parse(ev.target.result);
-        if (!Array.isArray(data)) { toast.error('Format invalide'); return; }
-        const rows = data
-          .filter(entry => entry.nom && entry.telephone)
-          .map(entry => ({
-            nom: entry.nom,
-            type_commerce: entry.commerce || 'Autre',
-            ville: entry.ville || '',
-            telephone: entry.telephone,
-            email: entry.email || '',
-            statut: 'nouveau',
-            notes: entry.notes || '',
-            canal: entry.sourceContact || 'autre',
+        const items = JSON.parse(ev.target.result);
+        if (!Array.isArray(items)) { toast.error('Format invalide'); return; }
+        const payloads = items
+          .filter(item => item.nom || item.name)
+          .map(item => ({
+            nom: item.nom || item.name || 'Sans nom',
+            telephone: item.telephone || item.phone || item.formatted_phone_number || null,
+            ville: item.ville || item.vicinity || item.adresse || null,
+            type_commerce: item.type_commerce || item.commerce || item.type || item.secteur || null,
+            canal: item.canal || item.sourceContact || item.source || 'import',
+            statut: item.statut || item.status || 'nouveau',
+            score: parseInt(item.score) || 0,
+            email: item.email || null,
+            notes: item.notes || item.audit_ia || null,
           }));
-        const { error } = await supabase.from('leads').insert(rows);
+        const { data: inserted, error } = await supabase.from('leads').insert(payloads).select();
+        console.log('[Leads][handleImport]', items.length, payloads[0], inserted, error);
         if (error) toast.error('Erreur import : ' + error.message);
-        else toast.success(`✅ ${rows.length} leads importés !`, { duration: 4000 });
+        else {
+          toast.success(`✅ ${payloads.length} leads importés !`, { duration: 4000 });
+          setLeads(prev => [...(inserted || []).map(fromDb), ...prev]);
+        }
       } catch { toast.error('Fichier JSON invalide'); }
     };
     reader.readAsText(file);

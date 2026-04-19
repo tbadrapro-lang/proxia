@@ -302,6 +302,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
   const handleAddToCRM = async () => {
     if (!selected) return;
 
+    const { data: existing } = await supabase.from('leads').select('id, nom').eq('nom', selected.name).maybeSingle();
+    if (existing) { toast.error(`"${existing.nom}" est déjà dans les leads`); return; }
+
     const payload = {
       nom: selected.name,
       telephone: selected.formatted_phone_number || selected.international_phone_number || '',
@@ -314,10 +317,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       created_at: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from('leads').insert([payload]);
+    const { data, error } = await supabase.from('leads').insert([payload]).select();
+    console.log('[Prospection][handleAddToCRM]', payload, data, error);
 
     if (error) {
-      console.log(error);
       toast.error('Erreur : ' + error.message);
       return;
     }

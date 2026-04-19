@@ -150,13 +150,15 @@ export default function Devis({ crm }) {
   const [signatureValid, setSignatureValid] = useState(false);
 
   useEffect(() => {
-    if (clientQuery.length < 2) { setClientSuggestions([]); return; }
+    if (clientQuery.length < 1) { setClientSuggestions([]); return; }
     const t = setTimeout(async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .select('id, nom, prenom, email, telephone, adresse, entreprise')
-        .or(`nom.ilike.%${clientQuery}%,entreprise.ilike.%${clientQuery}%,email.ilike.%${clientQuery}%`)
+        .or(`nom.ilike.%${clientQuery}%,prenom.ilike.%${clientQuery}%,entreprise.ilike.%${clientQuery}%,email.ilike.%${clientQuery}%`)
         .limit(6);
+      console.log('[Devis][searchClients]', clientQuery, data, error);
+      if (error) console.error('[Devis][searchClients] error:', error);
       setClientSuggestions(data || []);
       setShowSuggestions(true);
     }, 300);
@@ -346,12 +348,12 @@ export default function Devis({ crm }) {
                       />
                     </div>
                     <AnimatePresence>
-                      {showSuggestions && clientSuggestions.length > 0 && (
+                      {showSuggestions && clientQuery.length > 0 && (
                         <motion.ul
                           initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                          className="absolute z-20 w-full bg-gray-800 border border-purple-500 rounded-xl shadow-lg mt-1 overflow-hidden"
+                          className="absolute top-full left-0 right-0 mt-1 z-[9999] bg-gray-800 border border-purple-500 rounded-xl shadow-2xl max-h-60 overflow-y-auto"
                         >
-                          {clientSuggestions.map(c => (
+                          {clientSuggestions.length > 0 ? clientSuggestions.map(c => (
                             <li key={c.id}>
                               <button type="button" onClick={() => selectClient(c)}
                                 className="w-full text-left px-4 py-2.5 hover:bg-purple-900/50 transition-colors border-b border-gray-700/50 last:border-0"
@@ -361,7 +363,18 @@ export default function Devis({ crm }) {
                                 {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
                               </button>
                             </li>
-                          ))}
+                          )) : (
+                            <li className="px-4 py-3 text-sm text-gray-300">
+                              Aucun client trouvé.
+                              <button
+                                type="button"
+                                onClick={() => setShowSuggestions(false)}
+                                className="ml-2 text-purple-300 hover:text-purple-200 underline"
+                              >
+                                Va dans Clients pour en créer un →
+                              </button>
+                            </li>
+                          )}
                         </motion.ul>
                       )}
                     </AnimatePresence>
