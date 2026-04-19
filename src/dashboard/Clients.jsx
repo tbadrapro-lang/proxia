@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Phone, ExternalLink, CheckSquare, Square, FileText, StickyNote } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -265,12 +265,35 @@ function OngletNotes({ clientId }) {
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function Clients({ crm }) {
-  const { clients, addClient, updateClient, deleteClient } = crm;
+  const { addClient, updateClient, deleteClient } = crm;
+  const [clients, setClients] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState('infos');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadClients = async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) console.error('[Clients][Load]', error);
+      else setClients(data || []);
+    };
+    loadClients();
+
+    const channel = supabase
+      .channel('clients-realtime')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'clients' },
+        () => loadClients()
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, []);
 
   const handleAdd = async () => {
     if (!form.nom || !form.telephone) return;
@@ -310,7 +333,7 @@ export default function Clients({ crm }) {
     toast.success('Client supprimé');
   };
 
-  const sorted = [...clients].sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut));
+  const sorted = [...clients].sort((a, b) => new Date(b.created_at || b.dateDebut || 0) - new Date(a.created_at || a.dateDebut || 0));
 
   const TABS = [
     { id: 'infos', label: 'Infos' },

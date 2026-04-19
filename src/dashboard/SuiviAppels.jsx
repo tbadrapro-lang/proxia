@@ -216,16 +216,28 @@ export default function SuiviAppels() {
 
     toast.success(editingId ? 'Appel mis à jour' : 'Appel enregistré ✅');
 
-    if (!editingId && form.resultat === 'rdv_fixe' && form.date_rdv) {
-      const { data: agendaData, error: agendaError } = await supabase.from('agenda').insert([{
-        titre: 'RDV — ' + form.nom_commerce,
-        description: 'Contact: ' + (form.prenom_contact || '') + ' | Tél: ' + (form.telephone || ''),
-        date_debut: new Date(form.date_rdv).toISOString(),
-        type: 'rdv',
-      }]).select();
-      console.log('[SuiviAppels][Agenda] insert:', agendaData, agendaError);
-      if (agendaError) toast.error('Erreur agenda : ' + agendaError.message);
-      else toast.success("RDV ajouté à l'agenda !");
+    const resultatValue = form.resultat;
+    const dateRdv = form.date_rdv;
+
+    if (
+      (resultatValue === 'rdv_fixe' || resultatValue === 'rdv fixé')
+      && dateRdv
+    ) {
+      console.log('[SuiviAppels][Agenda] Ajout RDV:', dateRdv);
+      const { error: agendaError } = await supabase
+        .from('agenda')
+        .insert([{
+          titre: 'RDV — ' + form.nom_commerce,
+          description: 'Contact: ' + (form.prenom_contact || '')
+            + ' | Tél: ' + (form.telephone || ''),
+          date_debut: new Date(dateRdv).toISOString(),
+          type: 'rdv',
+        }]);
+      if (agendaError) {
+        console.error('[Agenda] ERREUR:', agendaError);
+      } else {
+        toast.success('RDV ajouté à l\'agenda !');
+      }
     }
 
     if (alsoToLeads && !editingId) {

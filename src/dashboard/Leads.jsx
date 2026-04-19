@@ -146,24 +146,45 @@ export default function Leads({ crm }) {
   };
 
   // Lead → Client (via Supabase)
-  const handleConvert = async (lead) => {
-    const payload = {
-      nom: lead.nom,
-      entreprise: lead.commerce || null,
-      telephone: lead.telephone || null,
-      email: lead.email || null,
-      adresse: null,
-      ville: lead.ville || null,
-      statut: 'actif',
-      notes: lead.notes || null,
-    };
-    const { data: newClient, error } = await supabase.from('clients').insert(payload).select().single();
-    console.log('[Leads][Convert] client créé:', newClient, error);
-    if (error) { toast.error('Erreur conversion : ' + error.message); return; }
-    await supabase.from('leads').update({ statut: 'client' }).eq('id', lead.id);
-    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, statut: 'client' } : l));
-    toast.success('✅ Lead converti en client !');
-    setSelected(null);
+  const handleConvertToClient = async (lead) => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([{
+          nom: lead.nom,
+          entreprise: lead.type_commerce || lead.commerce || null,
+          telephone: lead.telephone || null,
+          email: null,
+          ville: lead.ville || null,
+          statut: 'actif',
+          notes: lead.notes || null,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[Leads][Convert] ERREUR:', error);
+        alert('Erreur: ' + error.message);
+        return;
+      }
+
+      console.log('[Leads][Convert] client créé:', data);
+
+      await supabase
+        .from('leads')
+        .update({ statut: 'client' })
+        .eq('id', lead.id);
+
+      setLeads(prev => prev.map(l =>
+        l.id === lead.id ? { ...l, statut: 'client' } : l
+      ));
+
+      toast.success(lead.nom + ' converti en client !');
+      setSelected(null);
+    } catch (err) {
+      console.error('[Leads][Convert] EXCEPTION:', err);
+      alert('Erreur: ' + err.message);
+    }
   };
 
   // Lead → Prospect (crm hook localStorage + Supabase status)
@@ -466,7 +487,7 @@ export default function Leads({ crm }) {
                 >
                   <TrendingUp size={15} /> Passer en prospect
                 </button>
-                <button onClick={() => handleConvert(selected)}
+                <button onClick={() => handleConvertToClient(selected)}
                   className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 >
                   <UserCheck size={15} /> Convertir en client
