@@ -1,83 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, UserCheck, ChevronLeft, ChevronRight, AlertCircle, Star, Phone, MessageCircle } from 'lucide-react';
-import { formatDate, isOverdue, PACK_LABELS } from '../utils/crm';
+import { Plus, X, UserCheck, Phone, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabaseClient';
 
 const COLONNES = [
-  { id: 'rdv_planifié', label: 'RDV planifié', color: 'border-blue-400', bg: 'bg-blue-50', dot: 'bg-blue-400' },
-  { id: 'audit_fait', label: 'Audit fait', color: 'border-violet-400', bg: 'bg-violet-50', dot: 'bg-violet-400' },
-  { id: 'devis_envoyé', label: 'Devis envoyé', color: 'border-amber-400', bg: 'bg-amber-50', dot: 'bg-amber-400' },
-  { id: 'relance', label: 'Relance', color: 'border-orange-400', bg: 'bg-orange-50', dot: 'bg-orange-400' },
+  { id: 'qualifié', label: 'Qualifié', color: 'border-blue-400', bg: 'bg-blue-50', dot: 'bg-blue-400' },
+  { id: 'contacté', label: 'Contacté', color: 'border-violet-400', bg: 'bg-violet-50', dot: 'bg-violet-400' },
+  { id: 'rdv', label: 'RDV', color: 'border-amber-400', bg: 'bg-amber-50', dot: 'bg-amber-400' },
+  { id: 'devis', label: 'Devis', color: 'border-orange-400', bg: 'bg-orange-50', dot: 'bg-orange-400' },
 ];
 
-const PACKS = [
-  { value: 'visibilité_350', label: 'Visibilité 350€' },
-  { value: 'efficacite_600', label: 'Efficacité 600€' },
-  { value: 'agent_ia_100', label: 'Agent IA 100€/mois' },
-  { value: 'indécis', label: 'Indécis' },
-];
+const STATUTS_PROSPECT = COLONNES.map(c => c.id);
 
 const EMPTY_FORM = {
-  nom: '', commerce: '', ville: '', telephone: '', email: '',
-  statut: 'rdv_planifié', dateRdv: '', notesAudit: '',
-  packInteresse: 'visibilité_350', scoreInteret: 3,
-  prochainAction: '', dateProchainAction: '',
+  nom: '', telephone: '', email: '', ville: '', type_commerce: 'Restaurant',
+  notes: '', score: 50, statut: 'qualifié', canal: 'manuel',
 };
 
-function ScoreBadge({ score }) {
-  const color = score <= 2 ? 'text-gray-400' : score === 3 ? 'text-amber-400' : 'text-green-500';
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => (
-        <Star key={i} size={11} className={i <= score ? color : 'text-gray-200'} fill={i <= score ? 'currentColor' : 'none'} />
-      ))}
-    </div>
-  );
-}
-
-function ProspectCard({ prospect, onSelect, onMove, colonneIndex }) {
-  const overdue = prospect.dateProchainAction && isOverdue(prospect.dateProchainAction);
+function ProspectCard({ p, onSelect, onMove, colIdx }) {
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-xl border shadow-sm p-3 cursor-pointer hover:border-violet-300 transition-colors ${
-        overdue ? 'border-red-300' : 'border-gray-200'
-      }`}
-      onClick={() => onSelect(prospect)}
+      className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 cursor-pointer hover:border-violet-300 transition-colors"
+      onClick={() => onSelect(p)}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{prospect.nom}</p>
-          <p className="text-xs text-gray-500 truncate">{prospect.commerce} · {prospect.ville}</p>
+          <p className="font-semibold text-gray-900 text-sm truncate">{p.nom}</p>
+          <p className="text-xs text-gray-500 truncate">
+            {p.type_commerce || 'Commerce'} · {p.ville || '—'}
+          </p>
         </div>
-        <ScoreBadge score={prospect.scoreInteret} />
-      </div>
-      {prospect.packInteresse && (
-        <span className="mt-2 inline-block text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full font-medium">
-          {PACK_LABELS[prospect.packInteresse] || prospect.packInteresse}
+        <span className="text-[10px] bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full font-medium">
+          {p.score || 0}
         </span>
+      </div>
+      {p.telephone && (
+        <a
+          href={`tel:${p.telephone}`}
+          onClick={e => e.stopPropagation()}
+          className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-violet-600"
+        >
+          <Phone size={11} /> {p.telephone}
+        </a>
       )}
-      {prospect.prochainAction && (
-        <div className={`mt-2 flex items-center gap-1 text-[10px] ${overdue ? 'text-red-500' : 'text-gray-400'}`}>
-          {overdue && <AlertCircle size={10} />}
-          {prospect.prochainAction}
-        </div>
-      )}
-      {/* Flèches déplacement */}
       <div className="flex gap-1 mt-2 pt-2 border-t border-gray-50" onClick={e => e.stopPropagation()}>
-        {colonneIndex > 0 && (
-          <button onClick={() => onMove(prospect.id, COLONNES[colonneIndex - 1].id)}
-            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+        {colIdx > 0 && (
+          <button
+            onClick={() => onMove(p, COLONNES[colIdx - 1].id)}
+            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
           >
             <ChevronLeft size={12} />
           </button>
         )}
         <span className="flex-1" />
-        {colonneIndex < COLONNES.length - 1 && (
-          <button onClick={() => onMove(prospect.id, COLONNES[colonneIndex + 1].id)}
-            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+        {colIdx < COLONNES.length - 1 && (
+          <button
+            onClick={() => onMove(p, COLONNES[colIdx + 1].id)}
+            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
           >
             <ChevronRight size={12} />
           </button>
@@ -87,48 +70,138 @@ function ProspectCard({ prospect, onSelect, onMove, colonneIndex }) {
   );
 }
 
-export default function Prospects({ crm }) {
-  const { prospects, addProspect, updateProspect, deleteProspect, convertProspectToClient } = crm;
+export default function Prospects() {
+  const [prospects, setProspects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [selected, setSelected] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const chauds = prospects.filter(p => p.scoreInteret >= 4 && p.statut !== 'perdu').length;
+  const fetchProspects = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .in('statut', STATUTS_PROSPECT)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setProspects(data || []);
+    } catch (err) {
+      console.error('[Prospects][fetch]', err);
+      toast.error('Erreur chargement : ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleAdd = () => {
-    if (!form.nom || !form.telephone) return;
-    addProspect(form);
-    setForm(EMPTY_FORM);
-    setShowModal(false);
+  useEffect(() => {
+    fetchProspects();
+    const channel = supabase
+      .channel('prospects-leads-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => fetchProspects())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchProspects]);
+
+  const handleAdd = async () => {
+    if (!form.nom || !form.telephone) {
+      toast.error('Nom et téléphone requis');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        nom: form.nom.trim(),
+        telephone: form.telephone.trim() || null,
+        email: form.email.trim() || null,
+        ville: form.ville.trim() || null,
+        type_commerce: form.type_commerce.trim() || null,
+        notes: form.notes.trim() || null,
+        score: parseInt(form.score) || 0,
+        statut: form.statut,
+        canal: form.canal || 'manuel',
+      };
+      const { error } = await supabase.from('leads').insert(payload);
+      if (error) throw error;
+      toast.success('✅ Prospect ajouté');
+      setForm(EMPTY_FORM);
+      setShowModal(false);
+      fetchProspects();
+    } catch (err) {
+      console.error('[Prospects][handleAdd]', err);
+      toast.error('Erreur : ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleMove = (id, newStatut) => {
-    updateProspect(id, { statut: newStatut });
+  const handleMove = async (p, newStatut) => {
+    try {
+      const { error } = await supabase.from('leads').update({ statut: newStatut }).eq('id', p.id);
+      if (error) throw error;
+      toast.success(`Déplacé vers ${newStatut}`);
+    } catch (err) {
+      console.error('[Prospects][handleMove]', err);
+      toast.error('Erreur : ' + err.message);
+    }
   };
 
-  const handleConvert = (id) => {
-    convertProspectToClient(id);
-    setSelected(null);
+  const handleConvert = async (p) => {
+    if (!window.confirm(`Convertir ${p.nom} en client ?`)) return;
+    try {
+      const { error: insErr } = await supabase.from('clients').insert({
+        nom: p.nom,
+        telephone: p.telephone || null,
+        email: p.email || null,
+        adresse: p.ville || null,
+        statut: 'actif',
+        notes: p.notes || null,
+      });
+      if (insErr) throw insErr;
+      const { error: updErr } = await supabase.from('leads').update({ statut: 'client' }).eq('id', p.id);
+      if (updErr) throw updErr;
+      toast.success('✅ Converti en client');
+      setSelected(null);
+      fetchProspects();
+    } catch (err) {
+      console.error('[Prospects][handleConvert]', err);
+      toast.error('Erreur conversion : ' + err.message);
+    }
+  };
+
+  const handleDelete = async (p) => {
+    if (!window.confirm(`Supprimer ${p.nom} ?`)) return;
+    try {
+      const { error } = await supabase.from('leads').delete().eq('id', p.id);
+      if (error) throw error;
+      toast.success('Prospect supprimé');
+      setSelected(null);
+      fetchProspects();
+    } catch (err) {
+      console.error('[Prospects][handleDelete]', err);
+      toast.error('Erreur : ' + err.message);
+    }
   };
 
   return (
     <div className="p-6 max-w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Prospects</h1>
           <p className="text-gray-500 text-sm">
-            {prospects.length} prospects · <span className="text-green-600 font-medium">{chauds} chauds 🔥</span>
+            {loading ? 'Chargement…' : `${prospects.length} prospects en pipeline`}
           </p>
         </div>
-        <button onClick={() => setShowModal(true)}
+        <button
+          onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
         >
-          <Plus size={16} /> Nouveau Prospect
+          <Plus size={16} /> Ajouter prospect
         </button>
       </div>
 
-      {/* Kanban */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
         {COLONNES.map((col, colIdx) => {
           const cards = prospects.filter(p => p.statut === col.id);
@@ -143,13 +216,7 @@ export default function Prospects({ crm }) {
               </div>
               <div className="space-y-2 flex-1">
                 {cards.map(p => (
-                  <ProspectCard
-                    key={p.id}
-                    prospect={p}
-                    onSelect={setSelected}
-                    onMove={handleMove}
-                    colonneIndex={colIdx}
-                  />
+                  <ProspectCard key={p.id} p={p} onSelect={setSelected} onMove={handleMove} colIdx={colIdx} />
                 ))}
                 {cards.length === 0 && (
                   <div className="text-center py-6 text-gray-300 text-xs border-2 border-dashed border-gray-100 rounded-xl">
@@ -180,70 +247,51 @@ export default function Prospects({ crm }) {
               </div>
               <div className="p-6 space-y-4">
                 {[
-                  { label: 'Nom *', key: 'nom', type: 'text', placeholder: 'Leila M.' },
-                  { label: 'Commerce', key: 'commerce', type: 'text', placeholder: 'Salon de coiffure' },
-                  { label: 'Ville', key: 'ville', type: 'text', placeholder: 'Clichy' },
-                  { label: 'Téléphone *', key: 'telephone', type: 'tel', placeholder: '06...' },
-                  { label: 'Email', key: 'email', type: 'email', placeholder: 'optionnel' },
-                  { label: 'Date RDV', key: 'dateRdv', type: 'datetime-local', placeholder: '' },
-                  { label: 'Prochaine action', key: 'prochainAction', type: 'text', placeholder: 'Rappeler jeudi' },
-                  { label: 'Date prochaine action', key: 'dateProchainAction', type: 'date', placeholder: '' },
+                  { label: 'Nom *', key: 'nom', type: 'text' },
+                  { label: 'Téléphone *', key: 'telephone', type: 'tel' },
+                  { label: 'Email', key: 'email', type: 'email' },
+                  { label: 'Ville', key: 'ville', type: 'text' },
+                  { label: 'Type commerce', key: 'type_commerce', type: 'text' },
+                  { label: 'Score (0-100)', key: 'score', type: 'number' },
                 ].map(f => (
                   <div key={f.key}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                    <input type={f.type} value={form[f.key]} placeholder={f.placeholder}
+                    <input type={f.type} value={form[f.key]}
                       onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
                   </div>
                 ))}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pack intéressé</label>
-                    <select value={form.packInteresse} onChange={e => setForm(p => ({ ...p, packInteresse: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    >
-                      {PACKS.map(pk => <option key={pk.value} value={pk.value}>{pk.label}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Score intérêt (1-5)</label>
-                    <div className="flex gap-1 pt-1">
-                      {[1, 2, 3, 4, 5].map(n => (
-                        <button key={n} type="button"
-                          onClick={() => setForm(p => ({ ...p, scoreInteret: n }))}
-                          className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors ${
-                            form.scoreInteret >= n ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-400'
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                  <select value={form.statut} onChange={e => setForm(p => ({ ...p, statut: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    {COLONNES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes audit</label>
-                  <textarea value={form.notesAudit} onChange={e => setForm(p => ({ ...p, notesAudit: e.target.value }))}
-                    rows={3} placeholder="Ce qu'on a découvert lors de l'audit..."
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+                    rows={3}
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
                   />
                 </div>
               </div>
               <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button onClick={() => setShowModal(false)}
-                  className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
+                <button onClick={() => setShowModal(false)} disabled={saving}
+                  className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
                 >Annuler</button>
-                <button onClick={handleAdd} disabled={!form.nom || !form.telephone}
+                <button onClick={handleAdd} disabled={saving || !form.nom || !form.telephone}
                   className="flex-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                >Ajouter</button>
+                >{saving ? '…' : 'Ajouter'}</button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Drawer détail prospect */}
+      {/* Drawer détail */}
       <AnimatePresence>
         {selected && (
           <>
@@ -257,46 +305,29 @@ export default function Prospects({ crm }) {
               <div className="flex items-center justify-between p-5 border-b border-gray-100">
                 <div>
                   <h2 className="font-bold text-gray-900">{selected.nom}</h2>
-                  <p className="text-xs text-gray-500">{selected.commerce} · {selected.ville}</p>
+                  <p className="text-xs text-gray-500">{selected.type_commerce} · {selected.ville}</p>
                 </div>
                 <button onClick={() => setSelected(null)}><X size={20} className="text-gray-400" /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <ScoreBadge score={selected.scoreInteret} />
-                  <span className="text-xs bg-violet-50 text-violet-700 px-2.5 py-1 rounded-full font-medium">
-                    {PACK_LABELS[selected.packInteresse] || selected.packInteresse}
-                  </span>
-                </div>
                 <div className="space-y-2 text-sm">
-                  <p className="text-gray-500">Tél: <span className="text-gray-900 font-medium">{selected.telephone}</span></p>
+                  {selected.telephone && <p className="text-gray-500">Tél: <span className="text-gray-900 font-medium">{selected.telephone}</span></p>}
                   {selected.email && <p className="text-gray-500">Email: <span className="text-gray-900">{selected.email}</span></p>}
-                  <p className="text-gray-500">1er contact: <span className="text-gray-900">{formatDate(selected.dateContact)}</span></p>
-                  {selected.dateRdv && <p className="text-gray-500">RDV: <span className="text-gray-900">{formatDate(selected.dateRdv)}</span></p>}
+                  <p className="text-gray-500">Score: <span className="text-gray-900 font-medium">{selected.score || 0}</span></p>
+                  <p className="text-gray-500">Canal: <span className="text-gray-900">{selected.canal || '—'}</span></p>
                 </div>
-                {selected.notesAudit && (
+                {selected.notes && (
                   <div className="bg-violet-50 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-violet-600 mb-1">Notes audit</p>
-                    <p className="text-sm text-gray-700">{selected.notesAudit}</p>
-                  </div>
-                )}
-                {selected.prochainAction && (
-                  <div className={`rounded-xl p-3 ${isOverdue(selected.dateProchainAction) ? 'bg-red-50' : 'bg-amber-50'}`}>
-                    <p className={`text-xs font-semibold mb-1 ${isOverdue(selected.dateProchainAction) ? 'text-red-600' : 'text-amber-600'}`}>
-                      {isOverdue(selected.dateProchainAction) ? '⚠️ Action en retard' : 'Prochaine action'}
-                    </p>
-                    <p className="text-sm text-gray-700">{selected.prochainAction}</p>
-                    {selected.dateProchainAction && (
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(selected.dateProchainAction)}</p>
-                    )}
+                    <p className="text-xs font-semibold text-violet-600 mb-1">Notes</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selected.notes}</p>
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-2">Déplacer vers</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Statut</label>
                   <div className="grid grid-cols-2 gap-2">
                     {COLONNES.map(col => (
                       <button key={col.id}
-                        onClick={() => { updateProspect(selected.id, { statut: col.id }); setSelected(p => ({ ...p, statut: col.id })); }}
+                        onClick={() => { handleMove(selected, col.id); setSelected(p => ({ ...p, statut: col.id })); }}
                         className={`text-xs py-2 px-3 rounded-lg border transition-colors ${
                           selected.statut === col.id ? 'bg-violet-600 text-white border-violet-600' : 'border-gray-200 text-gray-700 hover:border-violet-300'
                         }`}
@@ -306,45 +337,32 @@ export default function Prospects({ crm }) {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-2">Score intérêt</label>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <button key={n}
-                        onClick={() => { updateProspect(selected.id, { scoreInteret: n }); setSelected(p => ({ ...p, scoreInteret: n })); }}
-                        className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors ${
-                          selected.scoreInteret >= n ? 'bg-amber-400 text-white' : 'bg-gray-100 text-gray-400'
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
               <div className="p-5 border-t border-gray-100 space-y-2">
                 <div className="flex gap-2">
-                  <a href={`tel:${selected.telephone}`}
-                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    <Phone size={15} /> Appeler
-                  </a>
-                  <a href={`https://wa.me/33${selected.telephone.replace(/^0/, '')}`} target="_blank" rel="noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 border border-green-200 text-green-700 py-2.5 rounded-xl text-sm font-medium hover:bg-green-50 transition-colors"
-                  >
-                    <MessageCircle size={15} /> WhatsApp
-                  </a>
+                  {selected.telephone && (
+                    <a href={`tel:${selected.telephone}`}
+                      className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      <Phone size={15} /> 📞 Appeler
+                    </a>
+                  )}
+                  {selected.telephone && (
+                    <a href={`https://wa.me/33${selected.telephone.replace(/^0/, '').replace(/\s/g, '')}`} target="_blank" rel="noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 border border-green-200 text-green-700 py-2.5 rounded-xl text-sm font-medium hover:bg-green-50 transition-colors"
+                    >
+                      <MessageCircle size={15} /> WhatsApp
+                    </a>
+                  )}
                 </div>
-                <button onClick={() => handleConvert(selected.id)}
+                <button onClick={() => handleConvert(selected)}
                   className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 >
                   <UserCheck size={15} /> Convertir en client
                 </button>
-                <button onClick={() => { deleteProspect(selected.id); setSelected(null); }}
+                <button onClick={() => handleDelete(selected)}
                   className="w-full text-red-500 hover:text-red-600 text-xs py-1 transition-colors"
-                >
-                  Supprimer ce prospect
-                </button>
+                >Supprimer ce prospect</button>
               </div>
             </motion.aside>
           </>

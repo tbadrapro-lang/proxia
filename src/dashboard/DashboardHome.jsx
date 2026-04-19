@@ -1,64 +1,108 @@
-import { useEffect } from 'react';
-import { Users, FileText, Clock, Euro, Calendar, ExternalLink } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Users, FileText, Clock, Euro, Calendar, ExternalLink, Bell, ArrowRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { formatDate, STATUT_LEAD_COLORS, STATUT_LEAD_LABELS } from '../utils/crm';
-import { requestNotificationPermission } from '../lib/notifications';
+import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabaseClient';
 
-export default function DashboardHome({ crm }) {
-  const { leads, clients, devis, factures, getCATotal, getCAParMois } = crm;
+const MOIS_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
-  useEffect(() => {
-    requestNotificationPermission();
+function buildChart(factures) {
+  const map = {};
+  (factures || []).forEach(f => {
+    if (f.statut !== 'payée') return;
+    const d = new Date(f.date_reglement || f.date_emission || f.created_at);
+    if (isNaN(d)) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    map[key] = (map[key] || 0) + (Number(f.total_ttc || f.montant) || 0);
+  });
+  const now = new Date();
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return { mois: MOIS_LABELS[d.getMonth()], ca: map[key] || 0 };
+  });
+}
+
+export default function DashboardHome({ setActiveView }) {
+  const [stats, setStats] = useState({
+    totalLeads: 0,
+    totalClients: 0,
+    caTotal: 0,
+    facturesAttente: 0,
+  });
+  const [chartData, setChartData] = useState(buildChart([]));
+  const [rdvToday, setRdvToday] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+      const [leadsCountRes, clientsCountRes, facturesPayeesRes, facturesAttenteRes, agendaRes] = await Promise.all([
+        supabase.from('leads').select('*', { count: 'exact', head: true }),
+        supabase.from('clients').select('*', { count: 'exact', head: true }),
+        supabase.from('factures').select('*').eq('statut', 'payée'),
+        supabase.from('factures').select('*', { count: 'exact', head: true }).eq('statut', 'en_attente'),
+        supabase.from('agenda').select('*').gte('date_debut', todayStr).lt('date_debut', tomorrowStr).order('date_debut'),
+      ]);
+
+      const facturesPayees = facturesPayeesRes.data || [];
+      const caTotal = facturesPayees.reduce((s, f) => s + (Number(f.total_ttc || f.montant) || 0), 0);
+
+      setStats({
+        totalLeads: leadsCountRes.count || 0,
+        totalClients: clientsCountRes.count || 0,
+        caTotal,
+        facturesAttente: facturesAttenteRes.count || 0,
+      });
+      setChartData(buildChart(facturesPayees));
+      setRdvToday(agendaRes.data || []);
+    } catch (err) {
+      console.error('[DashboardHome][loadAll]', err);
+      toast.error('Erreur chargement dashboard : ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const caTotal = getCATotal();
-  const devisNonSignes = devis.filter(d => d.statut === 'envoyé' || d.statut === 'brouillon').length;
-  const facturesImpayees = factures.filter(f => f.statut === 'en_attente' || f.statut === 'retard').length;
-  const clientsActifs = clients.filter(c => c.statut === 'actif').length;
-  const chartData = getCAParMois();
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const handleNotifications = async () => {
+    if (!('Notification' in window)) {
+      toast.error('Notifications non supportées par ce navigateur');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      toast.success('Notifications déjà activées');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      toast.error('Notifications bloquées — débloque-les dans les réglages du navigateur');
+      return;
+    }
+    const result = await Notification.requestPermission();
+    if (result === 'granted') toast.success('🔔 Notifications activées !');
+    else toast.error('Notifications refusées');
+  };
+
+  const openCalendly = () => {
+    window.open('https://calendly.com/tbadrapro/appel-decouverte-gratuit', '_blank', 'noopener,noreferrer');
+  };
+
+  const goToLeads = () => {
+    if (typeof setActiveView === 'function') setActiveView('leads');
+  };
 
   const kpis = [
-    {
-      label: 'Clients actifs',
-      value: clientsActifs,
-      icon: Users,
-      color: 'text-violet-600',
-      bg: 'bg-violet-50',
-      border: 'border-violet-100',
-    },
-    {
-      label: 'CA total payé',
-      value: `${caTotal.toLocaleString('fr-FR')} €`,
-      icon: Euro,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
-      border: 'border-amber-100',
-    },
-    {
-      label: 'Devis non signés',
-      value: devisNonSignes,
-      icon: FileText,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50',
-      border: 'border-orange-100',
-    },
-    {
-      label: 'Factures impayées',
-      value: facturesImpayees,
-      icon: Clock,
-      color: 'text-red-600',
-      bg: 'bg-red-50',
-      border: 'border-red-100',
-    },
+    { label: 'Total leads', value: stats.totalLeads, icon: Users, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+    { label: 'Clients', value: stats.totalClients, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+    { label: 'CA total payé', value: `${stats.caTotal.toLocaleString('fr-FR')} €`, icon: Euro, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
+    { label: 'Factures en attente', value: stats.facturesAttente, icon: Clock, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
   ];
-
-  const recentLeads = [...leads]
-    .sort((a, b) => new Date(b.dateAjout) - new Date(a.dateAjout))
-    .slice(0, 5);
-
-  const recentDevis = [...devis]
-    .sort((a, b) => new Date(b.dateCreation) - new Date(a.dateCreation))
-    .slice(0, 3);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -67,16 +111,22 @@ export default function DashboardHome({ crm }) {
           <h1 className="text-2xl font-bold text-gray-900">Bonjour Badra 👋</h1>
           <p className="text-gray-500 text-sm mt-1">Voici un résumé de ton activité Proxia</p>
         </div>
-        <a
-          href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
-        >
-          <Calendar size={15} />
-          Planifier un appel client
-          <ExternalLink size={12} className="opacity-70" />
-        </a>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleNotifications}
+            className="flex items-center gap-2 bg-white border border-gray-200 hover:border-violet-300 text-gray-700 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+          >
+            <Bell size={14} /> Activer notifications
+          </button>
+          <button
+            onClick={openCalendly}
+            className="flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+          >
+            <Calendar size={15} />
+            Planifier un appel client
+            <ExternalLink size={12} className="opacity-70" />
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -88,7 +138,7 @@ export default function DashboardHome({ crm }) {
               <div className={`w-10 h-10 ${kpi.bg} rounded-xl flex items-center justify-center mb-3`}>
                 <Icon size={18} className={kpi.color} />
               </div>
-              <div className="text-2xl font-bold text-gray-900">{kpi.value}</div>
+              <div className="text-2xl font-bold text-gray-900">{loading ? '…' : kpi.value}</div>
               <div className="text-gray-500 text-xs mt-1">{kpi.label}</div>
             </div>
           );
@@ -116,21 +166,28 @@ export default function DashboardHome({ crm }) {
           )}
         </div>
 
-        {/* Activité récente — Leads */}
+        {/* RDV aujourd'hui */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-900 mb-4">Derniers leads</h2>
-          {recentLeads.length === 0 ? (
-            <p className="text-gray-400 text-sm">Aucun lead pour le moment</p>
+          <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Calendar size={16} className="text-violet-600" /> RDV aujourd'hui
+          </h2>
+          {loading ? (
+            <p className="text-gray-400 text-sm">Chargement…</p>
+          ) : rdvToday.length === 0 ? (
+            <p className="text-gray-400 text-sm">Aucun RDV programmé aujourd'hui</p>
           ) : (
             <div className="space-y-3">
-              {recentLeads.map(lead => (
-                <div key={lead.id} className="flex items-center justify-between">
+              {rdvToday.map(rdv => (
+                <div key={rdv.id} className="flex items-center justify-between border-b border-gray-50 last:border-0 pb-2 last:pb-0">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{lead.nom}</p>
-                    <p className="text-xs text-gray-500">{lead.commerce} · {lead.ville} · {formatDate(lead.dateAjout)}</p>
+                    <p className="text-sm font-medium text-gray-900">{rdv.titre || 'Événement'}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(rdv.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {rdv.description ? ` · ${rdv.description}` : ''}
+                    </p>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUT_LEAD_COLORS[lead.statut]}`}>
-                    {STATUT_LEAD_LABELS[lead.statut]}
+                  <span className="text-[10px] uppercase tracking-wide bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full">
+                    {rdv.type || 'rdv'}
                   </span>
                 </div>
               ))}
@@ -138,53 +195,26 @@ export default function DashboardHome({ crm }) {
           )}
         </div>
 
-        {/* Devis récents */}
-        {recentDevis.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm lg:col-span-2">
-            <h2 className="font-semibold text-gray-900 mb-4">Derniers devis</h2>
-            <div className="space-y-3">
-              {recentDevis.map(d => (
-                <div key={d.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{d.id} — {d.clientNom}</p>
-                    <p className="text-xs text-gray-500">{formatDate(d.dateCreation)} · Valide jusqu'au {formatDate(d.dateValidite)}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-900">{d.total?.toLocaleString('fr-FR')} €</span>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                      d.statut === 'signé' ? 'bg-green-100 text-green-700'
-                      : d.statut === 'envoyé' ? 'bg-blue-100 text-blue-700'
-                      : d.statut === 'refusé' ? 'bg-red-100 text-red-600'
-                      : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {d.statut}
-                    </span>
-                  </div>
-                </div>
-              ))}
+        {/* CTA Voir tous les leads */}
+        <div className="bg-gradient-to-br from-violet-600 to-violet-800 rounded-2xl p-6 shadow-sm lg:col-span-2 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-violet-200 text-sm font-medium">Objectif août 2026</p>
+            <p className="text-white text-3xl font-bold mt-1">
+              {stats.caTotal.toLocaleString('fr-FR')} € <span className="text-violet-300 text-lg font-normal">/ 10 000 €</span>
+            </p>
+            <div className="mt-4 h-2 w-64 max-w-full bg-violet-900/50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all"
+                style={{ width: `${Math.min((stats.caTotal / 10000) * 100, 100)}%` }}
+              />
             </div>
           </div>
-        )}
-
-        {/* Objectif */}
-        <div className="bg-gradient-to-br from-violet-600 to-violet-800 rounded-2xl p-6 shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-violet-200 text-sm font-medium">Objectif août 2026</p>
-              <p className="text-white text-3xl font-bold mt-1">
-                {caTotal.toLocaleString('fr-FR')} € <span className="text-violet-300 text-lg font-normal">/ 10 000 €</span>
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-violet-200 text-sm">{Math.round((caTotal / 10000) * 100)}% atteint</p>
-            </div>
-          </div>
-          <div className="mt-4 h-2 bg-violet-900/50 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white rounded-full transition-all"
-              style={{ width: `${Math.min((caTotal / 10000) * 100, 100)}%` }}
-            />
-          </div>
+          <button
+            onClick={goToLeads}
+            className="flex items-center gap-2 bg-white text-violet-700 hover:bg-violet-50 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+          >
+            Voir tous les leads <ArrowRight size={15} />
+          </button>
         </div>
       </div>
     </div>

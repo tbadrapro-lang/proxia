@@ -286,7 +286,7 @@ export default function Dashboard() {
               transition={{ duration: 0.2 }}
               className="h-full"
             >
-              <ActiveComponent crm={crm} />
+              <ActiveComponent crm={crm} setActiveView={setActiveView} />
             </motion.div>
           </AnimatePresence>
         </main>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Phone, ExternalLink, CheckSquare, Square, FileText, StickyNote } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { formatDate, formatDateTime, STATUT_CLIENT_COLORS, PACK_LABELS, getAvatarColor } from '../utils/crm';
+import { supabase } from '../lib/supabaseClient';
 
 const EMPTY_FORM = {
   nom: '', commerce: '', ville: '', telephone: '', email: '',
@@ -268,12 +270,44 @@ export default function Clients({ crm }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState('infos');
+  const [saving, setSaving] = useState(false);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.nom || !form.telephone) return;
-    addClient({ ...form, montantPayé: Number(form.montantPayé) || 0 });
-    setForm(EMPTY_FORM);
-    setShowModal(false);
+    setSaving(true);
+    try {
+      const payload = {
+        nom: (form.nom || '').trim(),
+        prenom: null,
+        entreprise: (form.commerce || '').trim() || null,
+        email: (form.email || '').trim() || null,
+        telephone: (form.telephone || '').trim() || null,
+        adresse: (form.ville || '').trim() || null,
+        ville: (form.ville || '').trim() || null,
+        statut: form.statut || 'actif',
+        notes: (form.notes || '').trim() || null,
+      };
+      console.log('[Clients][handleAdd] payload:', payload);
+      const { data, error } = await supabase.from('clients').insert(payload).select().single();
+      console.log('[Clients][handleAdd] result:', data, error);
+      if (error) throw error;
+      addClient({ ...form, montantPayé: Number(form.montantPayé) || 0 });
+      toast.success('✅ Client ajouté !');
+      setForm(EMPTY_FORM);
+      setShowModal(false);
+    } catch (err) {
+      console.error('[Clients][handleAdd]', err);
+      toast.error('Erreur : ' + (err.message || 'inconnue'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = (client) => {
+    if (!window.confirm(`Supprimer définitivement le client ${client.nom} ?`)) return;
+    deleteClient(client.id);
+    setSelected(null);
+    toast.success('Client supprimé');
   };
 
   const sorted = [...clients].sort((a, b) => new Date(b.dateDebut) - new Date(a.dateDebut));
@@ -386,9 +420,9 @@ export default function Clients({ crm }) {
                 <button onClick={() => setShowModal(false)}
                   className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
                 >Annuler</button>
-                <button onClick={handleAdd} disabled={!form.nom || !form.telephone}
+                <button onClick={handleAdd} disabled={!form.nom || !form.telephone || saving}
                   className="flex-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                >Ajouter</button>
+                >{saving ? 'Enregistrement…' : 'Ajouter'}</button>
               </div>
             </motion.div>
           </motion.div>
@@ -498,7 +532,7 @@ export default function Clients({ crm }) {
                     </a>
                   )}
                 </div>
-                <button onClick={() => { deleteClient(selected.id); setSelected(null); }}
+                <button onClick={() => handleDelete(selected)}
                   className="w-full text-red-500 hover:text-red-600 text-xs py-1 transition-colors"
                 >Supprimer ce client</button>
               </div>

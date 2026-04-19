@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Calendar, ExternalLink } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Calendar, ExternalLink, Copy, Trash2, Globe } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 
 const API_KEY = 'AIzaSyApzkyeI2GsaNSLM3W8xdfw7bOVl5lAP9c';
@@ -34,7 +35,7 @@ function buildSystemContext(ctx) {
   if (ctx.leads?.length) {
     parts.push('\nDerniers leads (max 20) :');
     ctx.leads.forEach(l => {
-      parts.push(`- ${l.nom || 'Sans nom'} (${l.type || '?'}, ${l.adresse || '?'}) — statut: ${l.status || 'nouveau'} — ajouté: ${l.created_at?.slice(0, 10) || '?'}`);
+      parts.push(`- ${l.nom || 'Sans nom'} (${l.type_commerce || l.type || '?'}, ${l.ville || l.adresse || '?'}) — statut: ${l.statut || l.status || 'nouveau'} — ajouté: ${l.created_at?.slice(0, 10) || '?'}`);
     });
   }
 
@@ -154,6 +155,36 @@ export default function AssistantIA({ crm }) {
     }
   };
 
+  const handleAuditSite = async () => {
+    const url = window.prompt('URL du site à auditer (https://...) :');
+    if (!url) return;
+    const auditPrompt = `Audite ce site web : ${url}
+Donne un rapport en français avec :
+- Score global /100 (SEO, design, vitesse, conversion)
+- Points forts
+- Points faibles
+- Recommandations concrètes Proxia IA
+- Quel pack recommander (Visibilité 350€ / Efficacité 600€ / Agent IA)`;
+    sendMessage(auditPrompt);
+  };
+
+  const handleClear = () => {
+    if (!window.confirm('Effacer toute la conversation ?')) return;
+    setMessages([{
+      role: 'assistant',
+      content: "Salut Badra ! Conversation effacée. Comment je peux t'aider ?",
+    }]);
+  };
+
+  const handleCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copié dans le presse-papier');
+    } catch {
+      toast.error('Copie impossible');
+    }
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -172,7 +203,21 @@ export default function AssistantIA({ crm }) {
           <h1 className="font-bold text-gray-900">Proxia Assistant</h1>
           <p className="text-xs text-gray-500">Assistant business IA · Powered by Gemini</p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleAuditSite}
+            className="flex items-center gap-1.5 bg-violet-100 hover:bg-violet-200 text-violet-700 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+            title="Auditer un site web"
+          >
+            <Globe size={13} /> Auditer un site
+          </button>
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+            title="Effacer la conversation"
+          >
+            <Trash2 size={13} /> Effacer
+          </button>
           <a
             href={CALENDLY_URL}
             target="_blank"
@@ -208,6 +253,15 @@ export default function AssistantIA({ crm }) {
               {m.content.split('\n').map((line, j) => (
                 <span key={j}>{line}{j < m.content.split('\n').length - 1 && <br />}</span>
               ))}
+              {m.role === 'assistant' && (
+                <button
+                  onClick={() => handleCopy(m.content)}
+                  title="Copier la réponse"
+                  className="mt-2 mr-2 inline-flex items-center gap-1 text-[10px] text-gray-400 hover:text-violet-600 transition-colors"
+                >
+                  <Copy size={11} /> Copier
+                </button>
+              )}
               {m.role === 'assistant' && mentionsRdv(m.content) && (
                 <a
                   href={CALENDLY_URL}
