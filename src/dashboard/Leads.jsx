@@ -22,17 +22,18 @@ const SOURCES = [
 const STATUTS = ['nouveau', 'contacté', 'rdv_planifié', 'perdu'];
 
 // Normalise un lead Supabase vers le format UI
+// Fallback nouvelles colonnes (type_commerce/ville/statut/canal) → anciennes (type/adresse/status/source)
 function fromDb(row) {
   return {
     id: row.id,
     nom: row.nom || '',
-    commerce: row.type || '',
-    ville: row.adresse || '',
+    commerce: row.type_commerce || row.type || '',
+    ville: row.ville || row.adresse || '',
     telephone: row.telephone || '',
     email: row.email || '',
-    statut: row.status || 'nouveau',
+    statut: row.statut || row.status || 'nouveau',
     notes: row.notes || '',
-    sourceContact: row.source || 'terrain',
+    sourceContact: row.canal || row.source || 'terrain',
     dateAjout: row.created_at,
     score: row.score || 0,
   };
@@ -88,7 +89,7 @@ export default function Leads({ crm }) {
         const lead = payload.new || {};
         sendNotification(
           '🎯 Nouveau lead !',
-          `${lead.nom || 'Sans nom'} — ${lead.type || 'Commerce'} (${lead.adresse || 'Ville ?'})`
+          `${lead.nom || 'Sans nom'} — ${lead.type_commerce || lead.type || 'Commerce'} (${lead.ville || lead.adresse || 'Ville ?'})`
         );
         fetchLeads();
       })
@@ -108,13 +109,13 @@ export default function Leads({ crm }) {
     if (!form.nom || !form.telephone) return;
     const { error } = await supabase.from('leads').insert({
       nom: form.nom,
-      type: form.type,
-      adresse: form.ville,
+      type_commerce: form.type,
+      ville: form.ville,
       telephone: form.telephone,
       email: form.email,
-      status: form.status,
+      statut: form.status,
       notes: form.notes,
-      source: form.source,
+      canal: form.source,
     });
     if (error) {
       toast.error('Erreur lors de l\'ajout : ' + error.message);
@@ -127,7 +128,7 @@ export default function Leads({ crm }) {
 
   const handleUpdate = async (id, updates) => {
     const dbUpdates = {};
-    if (updates.statut !== undefined) dbUpdates.status = updates.statut;
+    if (updates.statut !== undefined) dbUpdates.statut = updates.statut;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     const { error } = await supabase.from('leads').update(dbUpdates).eq('id', id);
     if (error) toast.error('Erreur mise à jour');
@@ -150,14 +151,14 @@ export default function Leads({ crm }) {
       statut: 'actif',
     });
     if (error) { toast.error('Erreur conversion : ' + error.message); return; }
-    await supabase.from('leads').update({ status: 'converti' }).eq('id', lead.id);
+    await supabase.from('leads').update({ statut: 'converti' }).eq('id', lead.id);
     toast.success('✅ Lead converti en client !');
     setSelected(null);
   };
 
   // Lead → Prospect (crm hook localStorage + Supabase status)
   const handleConvertToProspect = async (lead) => {
-    await supabase.from('leads').update({ status: 'rdv_planifié' }).eq('id', lead.id);
+    await supabase.from('leads').update({ statut: 'rdv_planifié' }).eq('id', lead.id);
     if (crm?.addProspect) {
       crm.addProspect({
         nom: lead.nom,
@@ -189,13 +190,13 @@ export default function Leads({ crm }) {
           .filter(entry => entry.nom && entry.telephone)
           .map(entry => ({
             nom: entry.nom,
-            type: entry.commerce || 'Autre',
-            adresse: entry.ville || '',
+            type_commerce: entry.commerce || 'Autre',
+            ville: entry.ville || '',
             telephone: entry.telephone,
             email: entry.email || '',
-            status: 'nouveau',
+            statut: 'nouveau',
             notes: entry.notes || '',
-            source: entry.sourceContact || 'autre',
+            canal: entry.sourceContact || 'autre',
           }));
         const { error } = await supabase.from('leads').insert(rows);
         if (error) toast.error('Erreur import : ' + error.message);
