@@ -106,7 +106,7 @@ export default function PhoneMockupVisibilite() {
                 <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center mb-2">
                   <span className="text-white text-lg font-bold">A</span>
                 </div>
-                <h3 className="text-gray-900 font-bold text-sm">Chez Ahmed</h3>
+                <h3 className="text-gray-900 font-bold text-sm">Chez Marcel</h3>
                 <p className="text-gray-500 text-[10px]">Restaurant traditionnel · Clichy</p>
               </motion.div>
             )}

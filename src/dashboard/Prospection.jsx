@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Star, Globe, AlertCircle, Plus, Download, Copy, Loader2, Zap, MapPin } from 'lucide-react';
+import { Search, Star, Globe, AlertCircle, Plus, Download, Copy, Loader2, Zap, MapPin, Phone, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 
@@ -198,11 +198,45 @@ export default function Prospection() {
     }
   }, [secteur, ville]);
 
-  const handleSelect = (commerce) => {
+  const handleSelect = async (commerce) => {
     setSelected(commerce);
     setScore(calculerScore(commerce));
     setAudit(null);
     setAuditError('');
+
+    // Récupère le téléphone via Place Details API si pas déjà connu
+    if (commerce.place_id && !commerce.formatted_phone_number) {
+      try {
+        const res = await fetch(`/api/place-details?place_id=${commerce.place_id}`);
+        const data = await res.json();
+        if (data?.result) {
+          const enriched = {
+            ...commerce,
+            formatted_phone_number: data.result.formatted_phone_number || '',
+            international_phone_number: data.result.international_phone_number || '',
+            website: commerce.website || data.result.website || '',
+          };
+          setSelected(enriched);
+          // Met à jour aussi dans la liste pour persister
+          setResults(prev => prev.map(r => r.place_id === commerce.place_id ? enriched : r));
+        }
+      } catch (err) {
+        console.error('Place details error:', err);
+      }
+    }
+  };
+
+  const formatPhoneIntl = (phone) => {
+    if (!phone) return '';
+    return phone.replace(/\D/g, '').replace(/^0/, '33');
+  };
+
+  const buildWhatsappLink = (commerce) => {
+    const phone = commerce.international_phone_number || commerce.formatted_phone_number;
+    if (!phone) return '#';
+    const intl = formatPhoneIntl(phone);
+    const msg = `Bonjour 👋 Je suis Badra de Proxia IA. J'ai vu votre commerce ${commerce.name} et j'aimerais vous proposer un audit gratuit pour booster votre visibilité en ligne. Disponible cette semaine ? Badra | 06 74 31 45 75`;
+    return `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;
   };
 
   const handleAudit = async () => {
@@ -463,10 +497,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
                               <span className="text-gray-500 text-xs">({r.user_ratings_total} avis)</span>
                             </div>
                           </div>
-                          <div className="mt-1.5">
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {r.website
                               ? <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">✅ Site web</span>
-                              : <span className="text-xs text-red-400 bg-red-400/10 px-2 py-0.5 rounded-full">❌ Pas de site</span>
+                              : <span className="text-xs text-red-400 bg-red-500/15 border border-red-500/40 px-2 py-0.5 rounded-full font-semibold">🚨 SANS SITE - PRIORITÉ</span>
                             }
                           </div>
                         </div>
@@ -554,11 +588,37 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
                     </div>
                   )}
 
+                  {/* Téléphone */}
+                  {selected.formatted_phone_number && (
+                    <div className="mt-3 pt-3 border-t border-white/5">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">📱 Téléphone</p>
+                      <p className="text-white text-sm font-mono">{selected.formatted_phone_number}</p>
+                    </div>
+                  )}
+
                   {/* Actions rapides */}
                   <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/5">
+                    {selected.formatted_phone_number && (
+                      <a
+                        href={`tel:${selected.formatted_phone_number}`}
+                        className="flex items-center gap-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/40 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-blue-600/30 transition-colors"
+                      >
+                        <Phone size={13} /> 📞 Appeler
+                      </a>
+                    )}
+                    {selected.formatted_phone_number && (
+                      <a
+                        href={buildWhatsappLink(selected)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 bg-green-600/20 text-green-400 border border-green-500/40 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-green-600/30 transition-colors"
+                      >
+                        <MessageCircle size={13} /> 💬 WhatsApp
+                      </a>
+                    )}
                     <button
                       onClick={handleAddToCRM}
-                      className="flex items-center gap-1.5 bg-green-600/20 text-green-400 border border-green-500/40 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-green-600/30 transition-colors"
+                      className="flex items-center gap-1.5 bg-violet-600/20 text-violet-300 border border-violet-500/40 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-violet-600/30 transition-colors"
                     >
                       <Plus size={13} /> ➕ Ajouter au CRM
                     </button>
