@@ -112,7 +112,6 @@ export default function Leads({ crm }) {
       type_commerce: (form.type || '').trim(),
       ville: (form.ville || '').trim(),
       telephone: (form.telephone || '').trim(),
-      email: (form.email || '').trim(),
       statut: (form.status || 'nouveau').trim(),
       notes: (form.notes || '').trim(),
       canal: (form.source || 'terrain').trim(),
@@ -206,7 +205,6 @@ export default function Leads({ crm }) {
             canal: item.canal || item.sourceContact || item.source || 'import',
             statut: item.statut || item.status || 'nouveau',
             score: parseInt(item.score) || 0,
-            email: item.email || null,
             notes: item.notes || item.audit_ia || null,
           }));
         const { data: inserted, error } = await supabase.from('leads').insert(payloads).select();
