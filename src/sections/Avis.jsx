@@ -3,7 +3,7 @@ import { Star } from 'lucide-react';
 
 const avis = [
   {
-    nom: 'Mamadou D.',
+    nom: 'Martin D.',
     commerce: 'Restaurant à Clichy',
     note: 5,
     texte: 'Proxia a créé notre site en 4 jours chrono. Depuis, on reçoit des réservations en ligne tous les jours. Incroyable !',
@@ -11,27 +11,27 @@ const avis = [
     color: 'from-orange-500 to-amber-500',
   },
   {
-    nom: 'Aminata K.',
+    nom: 'Sophie L.',
     commerce: 'Salon de coiffure, Asnières',
     note: 5,
     texte: 'Très professionnel et réactif. Mon site est magnifique et mes clientes peuvent prendre RDV directement en ligne.',
-    avatar: 'A',
+    avatar: 'S',
     color: 'from-pink-500 to-violet-500',
   },
   {
-    nom: 'Karim B.',
+    nom: 'Thomas B.',
     commerce: 'Garage, Saint-Denis',
     note: 5,
     texte: "Je n'y croyais pas trop au début, mais depuis mon site je reçois des demandes de devis chaque semaine.",
-    avatar: 'K',
+    avatar: 'T',
     color: 'from-blue-500 to-cyan-500',
   },
   {
-    nom: 'Fatou S.',
+    nom: 'Emma S.',
     commerce: 'Institut esthétique, Levallois',
     note: 5,
     texte: 'Site livré en 5 jours exactement comme promis. Le formulaire de réservation en ligne a changé mon business.',
-    avatar: 'F',
+    avatar: 'E',
     color: 'from-violet-500 to-indigo-500',
   },
 ];
@@ -101,7 +101,7 @@ export default function Avis() {
           className="mt-10 flex items-center justify-center gap-3"
         >
           <div className="flex -space-x-1">
-            {['M', 'A', 'K', 'F'].map((l, i) => (
+            {['M', 'S', 'T', 'E'].map((l, i) => (
               <div key={i} className={`w-7 h-7 rounded-full bg-gradient-to-br ${avis[i].color} border-2 border-[#0A0F1E] flex items-center justify-center`}>
                 <span className="text-white text-[10px] font-bold">{l}</span>
               </div>

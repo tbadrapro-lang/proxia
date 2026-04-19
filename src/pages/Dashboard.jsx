@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard, UserSearch, Users, FileText, Receipt,
-  Calendar, Bot, LogOut, Menu, Target, Download, Crosshair
+  Calendar, Bot, LogOut, Menu, Target, Download, Crosshair, ClipboardList
 } from 'lucide-react';
 import useCRM from '../hooks/useCRM';
 import DashboardHome from '../dashboard/DashboardHome';
@@ -14,6 +14,7 @@ import Factures from '../dashboard/Factures';
 import Agenda from '../dashboard/Agenda';
 import AssistantIA from '../dashboard/AssistantIA';
 import Prospection from '../dashboard/Prospection';
+import SuiviAppels from '../dashboard/SuiviAppels';
 
 const PIN_KEY = 'proxia_auth';
 const CORRECT_PIN = '2611';
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { id: 'agenda', label: 'Agenda', icon: Calendar },
   { id: 'assistant', label: 'Assistant IA', icon: Bot },
   { id: 'prospection', label: 'Prospection IA', icon: Crosshair },
+  { id: 'suivi-appels', label: 'Suivi Appels', icon: ClipboardList },
 ];
 
 const LEADS_TEMPLATE = [
@@ -150,6 +152,7 @@ export default function Dashboard() {
     agenda: Agenda,
     assistant: AssistantIA,
     prospection: Prospection,
+    'suivi-appels': SuiviAppels,
   };
 
   if (!authed) return <PinScreen onSuccess={() => setAuthed(true)} />;

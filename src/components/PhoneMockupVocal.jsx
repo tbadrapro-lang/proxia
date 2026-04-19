@@ -116,7 +116,7 @@ export default function PhoneMockupVocal() {
             )}
           </AnimatePresence>
 
-          {/* Koné avatar after pickup */}
+          {/* Avatar after pickup */}
           <AnimatePresence>
             {has('pickup') && (
               <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
@@ -126,10 +126,10 @@ export default function PhoneMockupVocal() {
                     transition={{ repeat: Infinity, duration: 2 }}
                     className="absolute inset-0 rounded-full bg-amber-400/30" />
                   <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-                    <span className="text-white text-2xl font-bold">K</span>
+                    <span className="text-white text-2xl font-bold">P</span>
                   </div>
                 </div>
-                <p className="text-white font-bold text-sm">Koné — Agent Vocal</p>
+                <p className="text-white font-bold text-sm">Proxia Assistant — Agent Vocal</p>
                 <p className="text-amber-400 text-[10px] font-medium">{formatTime(callTimer)}</p>
               </motion.div>
             )}
@@ -154,13 +154,13 @@ export default function PhoneMockupVocal() {
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2">
                 <p className="text-amber-400/60 text-[9px] uppercase tracking-wide mb-1 font-medium">Transcription live</p>
                 <p className="text-white/80 text-[11px] leading-relaxed italic">
-                  &quot;Bonjour, je suis Koné, l&apos;assistant vocal de Chez Ahmed. Comment puis-je vous aider ?&quot;
+                  &quot;Bonjour, je suis Proxia Assistant, l&apos;assistant vocal de Chez Marcel. Comment puis-je vous aider ?&quot;
                 </p>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Transcription 2 - Client + Koné */}
+          {/* Transcription 2 - Client + Proxia Assistant */}
           <AnimatePresence>
             {has('transcript2') && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -170,7 +170,7 @@ export default function PhoneMockupVocal() {
                   <p className="text-white/70 text-[11px] italic">&quot;Je voudrais un RDV jeudi à 14h&quot;</p>
                 </div>
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
-                  <p className="text-amber-400/60 text-[9px] mb-1">🤖 Koné</p>
+                  <p className="text-amber-400/60 text-[9px] mb-1">🤖 Proxia Assistant</p>
                   <p className="text-amber-200 text-[11px] italic">&quot;C&apos;est noté ! Jeudi 14h confirmé.&quot;</p>
                 </div>
               </motion.div>

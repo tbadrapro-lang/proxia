@@ -1,13 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Calendar, ExternalLink } from 'lucide-react';
 
 const API_KEY = 'AIzaSyApzkyeI2GsaNSLM3W8xdfw7bOVl5lAP9c';
+const CALENDLY_URL = 'https://calendly.com/tbadrapro/appel-decouverte-gratuit';
+
+// Détecte si la réponse de l'IA mentionne un RDV / appel
+const mentionsRdv = (text) => {
+  if (!text) return false;
+  return /\b(rdv|rendez[- ]?vous|calendly|prendre.{0,10}appel|réserver.{0,10}appel|planifier.{0,10}appel|appel.{0,15}découverte)\b/i.test(text);
+};
 
 const SYSTEM_PROMPT = `Tu es Proxia Assistant, l'assistant business de Badra Traoré, fondateur de Proxia.
 Proxia est une agence IA pour commerçants locaux à Clichy/Île-de-France.
 Tu aides Badra à gérer son activité : rédiger des devis, préparer des scripts de prospection, gérer ses clients, analyser son CA, préparer ses relances.
 Tu connais ses packs : Visibilité 350€, Efficacité 600€, Agent IA 100€/mois.
 Son objectif : 10 000€ de CA avant fin août 2026.
+Si Badra (ou un client) demande un rendez-vous, propose explicitement de réserver un appel via Calendly (https://calendly.com/tbadrapro/appel-decouverte-gratuit). Le bouton de réservation s'affichera automatiquement.
 Réponds toujours en français, de manière directe et actionnable. Sois concis et opérationnel.`;
 
 const SUGGESTIONS = [
@@ -89,9 +97,19 @@ export default function AssistantIA({ crm }) {
           <h1 className="font-bold text-gray-900">Proxia Assistant</h1>
           <p className="text-xs text-gray-500">Assistant business IA · Powered by Gemini</p>
         </div>
-        <div className="ml-auto flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          En ligne
+        <div className="ml-auto flex items-center gap-2">
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+          >
+            <Calendar size={13} /> 📅 Prendre RDV
+          </a>
+          <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            En ligne
+          </div>
         </div>
       </div>
 
@@ -115,6 +133,16 @@ export default function AssistantIA({ crm }) {
               {m.content.split('\n').map((line, j) => (
                 <span key={j}>{line}{j < m.content.split('\n').length - 1 && <br />}</span>
               ))}
+              {m.role === 'assistant' && mentionsRdv(m.content) && (
+                <a
+                  href={CALENDLY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Calendar size={13} /> Réserver un appel sur Calendly <ExternalLink size={11} />
+                </a>
+              )}
             </div>
           </div>
         ))}

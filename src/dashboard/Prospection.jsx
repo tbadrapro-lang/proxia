@@ -592,7 +592,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
                   {auditLoading && (
                     <div className="flex flex-col items-center gap-3 py-6">
                       <Loader2 size={28} className="animate-spin text-violet-400" />
-                      <p className="text-gray-400 text-sm">🤖 Koné analyse ce commerce...</p>
+                      <p className="text-gray-400 text-sm">🤖 Proxia Assistant analyse ce commerce...</p>
                     </div>
                   )}
 

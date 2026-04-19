@@ -83,9 +83,9 @@ export default function PhoneMockupEfficacite() {
         </div>
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-2 border-b border-violet-900/40">
-          <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">K</div>
+          <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">P</div>
           <div>
-            <p className="text-white text-xs font-medium">Koné — Assistant IA</p>
+            <p className="text-white text-xs font-medium">Proxia Assistant — Assistant IA</p>
             <p className="text-violet-400 text-[10px] flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block animate-pulse" />Répond en 1.2s
             </p>
@@ -118,7 +118,7 @@ export default function PhoneMockupEfficacite() {
             {showTyping && (
               <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="bg-violet-900/60 rounded-[18px_18px_18px_4px] px-3 py-2 self-start flex gap-1 items-center">
-                <span className="text-violet-300 text-[10px] mr-1">Koné tape</span>
+                <span className="text-violet-300 text-[10px] mr-1">Proxia tape</span>
                 {[0,1,2].map(i => (
                   <motion.span key={i} className="w-1.5 h-1.5 rounded-full bg-violet-400 block"
                     animate={{ scale: [1, 1.5, 1] }} transition={{ delay: i * 0.15, repeat: Infinity, duration: 0.6 }} />

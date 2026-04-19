@@ -152,7 +152,7 @@ export default function Devis({ crm }) {
       const { data } = await supabase
         .from('clients')
         .select('id, nom, prenom, email, telephone, adresse, entreprise')
-        .ilike('nom', `%${clientQuery}%`)
+        .or(`nom.ilike.%${clientQuery}%,entreprise.ilike.%${clientQuery}%,email.ilike.%${clientQuery}%`)
         .limit(6);
       setClientSuggestions(data || []);
       setShowSuggestions(true);
@@ -327,6 +327,7 @@ export default function Devis({ crm }) {
                                 className="w-full text-left px-4 py-2.5 hover:bg-violet-50 transition-colors border-b border-gray-50 last:border-0"
                               >
                                 <p className="text-sm font-medium text-gray-900">{c.nom} {c.prenom}</p>
+                                {c.entreprise && <p className="text-xs text-violet-600">{c.entreprise}</p>}
                                 {c.email && <p className="text-xs text-gray-400">{c.email}</p>}
                               </button>
                             </li>

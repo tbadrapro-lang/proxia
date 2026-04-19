@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 const visibiliteMessages = [
   { type: 'recu', text: 'Bonjour, je cherche à avoir un site pour mon salon ✂️', delay: 0 },
   { type: 'typing', delay: 1000 },
-  { type: 'envoye', text: "Bonjour Fatou ! Je suis Koné chez Proxia. Je vous rappelle dans l'heure pour votre devis gratuit 👋", delay: 2200 },
-  { type: 'notif', icon: '🌐', title: 'Site mis en ligne !', text: 'salon-fatou-clichy.fr est en ligne', delay: 4000 },
+  { type: 'envoye', text: "Bonjour Sophie ! Je suis Proxia Assistant. Je vous rappelle dans l'heure pour votre devis gratuit 👋", delay: 2200 },
+  { type: 'notif', icon: '🌐', title: 'Site mis en ligne !', text: 'salon-sophie-clichy.fr est en ligne', delay: 4000 },
   { type: 'typing', delay: 5200 },
   { type: 'recu', text: "Mon site est magnifique ! J'ai déjà 3 appels ce matin 🔥", delay: 6400 },
   { type: 'action', title: 'Google My Business', text: 'Fiche salon optimisée · 147 vues ce jour', delay: 7600 },
@@ -20,7 +20,7 @@ const efficaciteMessages = [
   { type: 'recu', text: 'Oui pour 4 personnes samedi à 20h', delay: 2700 },
   { type: 'typing', delay: 3300 },
   { type: 'envoye', text: "C'est réservé ! Table pour 4 samedi 12 avr. à 20h00. Confirmation envoyée par email ✅", delay: 4400 },
-  { type: 'action', title: 'Koné a géré pour vous', text: '23h14 · Réservation confirmée · Karim est libre', delay: 5800 },
+  { type: 'action', title: 'Proxia Assistant a géré pour vous', text: '23h14 · Réservation confirmée · Thomas est libre', delay: 5800 },
   { type: 'notif', icon: '📩', title: 'Email automatique envoyé', text: 'Confirmation + rappel J-1 programmé', delay: 7200 },
 ];
 
@@ -133,9 +133,9 @@ export default function PhoneMockup({ scenario = 'visibilite' }) {
       </div>
       {/* Contact header */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
-        <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">K</div>
+        <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-bold">P</div>
         <div>
-          <p className="text-white text-xs font-medium">Koné — Proxia IA</p>
+          <p className="text-white text-xs font-medium">Proxia Assistant — Proxia IA</p>
           <p className="text-green-400 text-[10px] flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />En ligne
           </p>

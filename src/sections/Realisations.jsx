@@ -4,7 +4,7 @@ const projets = [
   {
     secteur: 'Restaurant',
     icon: '🍽️',
-    nom: 'Restaurant Chez Mamadou',
+    nom: 'Restaurant Chez Marcel',
     ville: 'Clichy',
     service: 'Site vitrine + Réservation',
     resultat: '+40% de réservations en ligne',
@@ -17,7 +17,7 @@ const projets = [
   {
     secteur: 'Coiffure',
     icon: '✂️',
-    nom: 'Salon Beauté Diallo',
+    nom: 'Salon Prestige',
     ville: 'Asnières',
     service: 'Site + Prise de RDV',
     resultat: '30 RDV en ligne dès la 1ère semaine',
@@ -43,7 +43,7 @@ const projets = [
   {
     secteur: 'Traiteur',
     icon: '🧆',
-    nom: "Traiteur Saveurs d'Afrique",
+    nom: 'Le Bistrot du Coin',
     ville: 'Levallois',
     service: 'Site + Commande en ligne',
     resultat: '+60% de commandes pour événements',
@@ -56,7 +56,7 @@ const projets = [
   {
     secteur: 'Esthétique',
     icon: '💅',
-    nom: 'Institut Beauté Koné',
+    nom: 'Institut Élégance',
     ville: 'Clichy',
     service: 'Site + Boutique en ligne',
     resultat: '15 000€ de ventes en ligne en 3 mois',
@@ -69,7 +69,7 @@ const projets = [
   {
     secteur: 'Fast-food',
     icon: '🌮',
-    nom: 'O\'Kebab Clichy',
+    nom: 'Le Snack Rapide',
     ville: 'Clichy',
     service: 'Menu digital + Commande',
     resultat: '+25% de commandes click & collect',

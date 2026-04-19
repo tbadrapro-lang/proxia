@@ -5,7 +5,7 @@ export default function AvatarKone() {
   const [open, setOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Bonjour ! Je suis Koné, l'agent IA Proxia 👋 Comment puis-je vous aider ?" }
+    { role: 'assistant', content: "Bonjour ! Je suis Proxia Assistant, l'agent IA Proxia 👋 Comment puis-je vous aider ?" }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -159,7 +159,7 @@ export default function AvatarKone() {
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-white text-sm font-medium">Koné — Agent IA</p>
+                <p className="text-white text-sm font-medium">Proxia Assistant — Agent IA</p>
                 <p className="text-violet-200 text-xs flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />En ligne
                 </p>

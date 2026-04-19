@@ -13,11 +13,11 @@ const load = (key, fallback) => {
 const DEMO_LEADS = [
   {
     id: 'LEAD-DEMO-001',
-    nom: 'Karim B.',
+    nom: 'Thomas B.',
     commerce: 'Restaurant',
     ville: 'Clichy',
     telephone: '0601020304',
-    email: 'karim@lesoleil.fr',
+    email: 'thomas@lesoleil.fr',
     statut: 'nouveau',
     notes: 'Rencontré lors de la prospection rue de Paris',
     dateAjout: new Date(Date.now() - 2 * 86400000).toISOString(),
@@ -37,7 +37,7 @@ const DEMO_LEADS = [
   },
   {
     id: 'LEAD-DEMO-003',
-    nom: 'Ahmed T.',
+    nom: 'Pierre T.',
     commerce: 'Garage',
     ville: 'Saint-Denis',
     telephone: '0611121314',
@@ -52,11 +52,11 @@ const DEMO_LEADS = [
 const DEMO_CLIENTS = [
   {
     id: 'CLIENT-DEMO-001',
-    nom: 'Fatou K.',
+    nom: 'Emma K.',
     commerce: 'Salon de beauté',
     ville: 'Clichy',
     telephone: '0622334455',
-    email: 'fatou@salonbeaute.fr',
+    email: 'emma@salonbeaute.fr',
     statut: 'actif',
     packAcheté: 'visibilité_350',
     montantPayé: 350,
@@ -67,18 +67,18 @@ const DEMO_CLIENTS = [
   },
   {
     id: 'CLIENT-DEMO-002',
-    nom: 'DiaspoConnect',
-    commerce: 'Plateforme diaspora',
+    nom: 'BoutiqueConnect',
+    commerce: 'Plateforme e-commerce',
     ville: 'Paris',
     telephone: '0633445566',
-    email: 'contact@diaspoconnect.fr',
+    email: 'contact@boutiqueconnect.fr',
     statut: 'livré',
     packAcheté: 'custom',
     montantPayé: 600,
     dateDebut: new Date(Date.now() - 30 * 86400000).toISOString(),
     dateLivraison: new Date(Date.now() - 5 * 86400000).toISOString(),
     notes: 'Projet livré avec succès. Site + chatbot IA.',
-    projetUrl: 'https://diaspoconnect.fr',
+    projetUrl: 'https://boutiqueconnect.fr',
   },
 ];
 
@@ -86,7 +86,7 @@ const DEMO_FACTURES = [
   {
     id: 'FAC-001',
     devisId: '',
-    clientNom: 'DiaspoConnect',
+    clientNom: 'BoutiqueConnect',
     montant: 600,
     statut: 'payée',
     dateEmission: new Date(Date.now() - 30 * 86400000).toISOString(),
@@ -97,7 +97,7 @@ const DEMO_FACTURES = [
   {
     id: 'FAC-002',
     devisId: '',
-    clientNom: 'Fatou K.',
+    clientNom: 'Emma K.',
     montant: 175,
     statut: 'payée',
     dateEmission: new Date(Date.now() - 15 * 86400000).toISOString(),
@@ -108,7 +108,7 @@ const DEMO_FACTURES = [
   {
     id: 'FAC-003',
     devisId: '',
-    clientNom: 'Fatou K.',
+    clientNom: 'Emma K.',
     montant: 175,
     statut: 'en_attente',
     dateEmission: new Date(Date.now() - 5 * 86400000).toISOString(),
@@ -121,11 +121,11 @@ const DEMO_FACTURES = [
 const DEMO_PROSPECTS = [
   {
     id: 'PROSPECT-DEMO-001',
-    nom: 'Leila M.',
+    nom: 'Marie M.',
     commerce: 'Salon Nails & Beauty',
     ville: 'Levallois',
     telephone: '0644556677',
-    email: 'leila@nailsbeauty.fr',
+    email: 'marie@nailsbeauty.fr',
     statut: 'audit_fait',
     dateContact: new Date(Date.now() - 4 * 86400000).toISOString(),
     dateRdv: new Date(Date.now() - 3 * 86400000).toISOString(),
@@ -137,8 +137,8 @@ const DEMO_PROSPECTS = [
   },
   {
     id: 'PROSPECT-DEMO-002',
-    nom: 'Omar S.',
-    commerce: 'Restaurant Dakar Saveurs',
+    nom: 'Lucas S.',
+    commerce: 'Restaurant Le Bistrot du Coin',
     ville: 'Clichy',
     telephone: '0655667788',
     email: '',
