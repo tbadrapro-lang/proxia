@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, CheckCircle, Clock, AlertTriangle, Euro, Search } from 'lucide-react';
+import { Plus, X, CheckCircle, Clock, AlertTriangle, Euro, Search, Trash2 } from 'lucide-react';
 import { formatDate, isOverdue, STATUT_FACTURE_COLORS } from '../utils/crm';
 import { supabase } from '../lib/supabaseClient';
 
@@ -16,7 +16,13 @@ const MODES = [
 ];
 
 export default function Factures({ crm }) {
-  const { factures, addFacture, marquerPayee } = crm;
+  const { factures, addFacture, marquerPayee, deleteFacture } = crm;
+
+  const handleDelete = (f) => {
+    if (window.confirm(`Supprimer la facture ${f.id} (${f.clientNom} — ${f.montant?.toLocaleString('fr-FR')} €) ?`)) {
+      deleteFacture(f.id);
+    }
+  };
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [clientQuery, setClientQuery] = useState('');
@@ -148,6 +154,12 @@ export default function Factures({ crm }) {
                     <CheckCircle size={13} /> Marquer payée
                   </button>
                 )}
+                <button onClick={() => handleDelete(f)}
+                  title="Supprimer la facture"
+                  className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                >
+                  <Trash2 size={13} /> Supprimer
+                </button>
               </div>
             </div>
           </motion.div>

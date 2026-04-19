@@ -311,6 +311,10 @@ export default function useCRM() {
     updateFacture(id, { statut: 'payée', dateReglement: new Date().toISOString() });
   };
 
+  const deleteFacture = (id) => {
+    setFactures(prev => prev.filter(f => f.id !== id));
+  };
+
   // AGENDA
   const addEvent = (event) => {
     setAgenda(prev => [...prev, { ...event, id: generateId('EVT') }]);
@@ -368,7 +372,7 @@ export default function useCRM() {
     addClient, updateClient, deleteClient,
     addProspect, updateProspect, deleteProspect, convertProspectToClient,
     addDevis, updateDevis, deleteDevis,
-    addFacture, updateFacture, marquerPayee,
+    addFacture, updateFacture, marquerPayee, deleteFacture,
     addEvent, updateEvent, deleteEvent,
     getCATotal, getCAMois, getLeadsEnRetard, getCAParMois,
   };
