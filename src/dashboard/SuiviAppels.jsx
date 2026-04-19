@@ -238,6 +238,34 @@ export default function SuiviAppels() {
       } else {
         toast.success('RDV ajouté à l\'agenda !');
       }
+
+      // Création auto du lead si non existant
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('nom', form.nom_commerce)
+        .maybeSingle();
+
+      if (!existingLead) {
+        const { error: leadError } = await supabase
+          .from('leads')
+          .insert([{
+            nom: form.nom_commerce,
+            telephone: form.telephone || null,
+            ville: form.ville || null,
+            type_commerce: form.type_commerce || null,
+            canal: form.canal_contact || 'terrain',
+            statut: 'rdv',
+            score: form.score_proxia || 0,
+            notes: form.notes || null,
+          }]);
+
+        if (!leadError) {
+          toast.success('Lead créé automatiquement !');
+        } else {
+          console.error('[SuiviAppels][AutoLead]', leadError);
+        }
+      }
     }
 
     if (alsoToLeads && !editingId) {

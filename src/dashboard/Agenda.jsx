@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Link2, RefreshCw } from 'lucide-react';
+import { X, Link2, RefreshCw, UserPlus, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -24,6 +24,8 @@ export default function Agenda() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [confirmClient, setConfirmClient] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -87,12 +89,79 @@ export default function Agenda() {
     else toast.success('✅ Événement ajouté');
   };
 
-  const handleEventClick = async (info) => {
-    const ok = window.confirm(`Supprimer "${info.event.title}" ?`);
-    if (!ok) return;
-    const { error } = await supabase.from('agenda').delete().eq('id', info.event.id);
+  const handleEventClick = (info) => {
+    setSelectedEvent({
+      id: info.event.id,
+      title: info.event.title,
+      start: info.event.start,
+      description: info.event.extendedProps.description || '',
+      type: info.event.extendedProps.type || 'rdv',
+    });
+    setConfirmClient(false);
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    if (!window.confirm(`Supprimer "${selectedEvent.title}" ?`)) return;
+    const { error } = await supabase.from('agenda').delete().eq('id', selectedEvent.id);
     if (error) toast.error('Erreur suppression');
-    else toast.success('Événement supprimé');
+    else { toast.success('Événement supprimé'); setSelectedEvent(null); }
+  };
+
+  const handleCreateLead = async () => {
+    if (!selectedEvent) return;
+    const nomCommerce = selectedEvent.title
+      .replace('RDV — ', '')
+      .replace('RDV - ', '')
+      .trim();
+
+    const { data: existing } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('nom', nomCommerce)
+      .maybeSingle();
+
+    if (existing) {
+      toast.error(`"${nomCommerce}" est déjà dans les leads`);
+      return;
+    }
+
+    const { error } = await supabase.from('leads').insert([{
+      nom: nomCommerce,
+      statut: 'rdv',
+      canal: 'agenda',
+      score: 0,
+    }]);
+
+    if (error) {
+      console.error('[Agenda][CreateLead]', error);
+      toast.error('Erreur : ' + error.message);
+    } else {
+      toast.success('👤 Lead créé : ' + nomCommerce);
+      setSelectedEvent(null);
+    }
+  };
+
+  const handleConvertToClient = async () => {
+    if (!selectedEvent) return;
+    const nomCommerce = selectedEvent.title
+      .replace('RDV — ', '')
+      .replace('RDV - ', '')
+      .trim();
+
+    const { error } = await supabase.from('clients').insert([{
+      nom: nomCommerce,
+      statut: 'actif',
+    }]);
+
+    if (error) {
+      console.error('[Agenda][ConvertClient]', error);
+      toast.error('Erreur : ' + error.message);
+    } else {
+      toast.success('⭐ Client créé : ' + nomCommerce);
+      setSelectedEvent(null);
+      setConfirmClient(false);
+    }
   };
 
   return (
@@ -156,6 +225,84 @@ export default function Agenda() {
           selectable
         />
       </div>
+
+      {/* Modal détail événement */}
+      <AnimatePresence>
+        {selectedEvent && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={e => e.target === e.currentTarget && setSelectedEvent(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="bg-white rounded-2xl w-full max-w-md shadow-2xl"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div>
+                  <h2 className="font-bold text-gray-900 text-lg">{selectedEvent.title}</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {selectedEvent.start
+                      ? new Date(selectedEvent.start).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+                      : ''}
+                  </p>
+                </div>
+                <button onClick={() => setSelectedEvent(null)}><X size={20} className="text-gray-400" /></button>
+              </div>
+              <div className="p-6 space-y-3">
+                {selectedEvent.description && (
+                  <p className="text-sm text-gray-600 bg-gray-50 rounded-xl px-4 py-3">{selectedEvent.description}</p>
+                )}
+                <span className="inline-block text-xs px-2.5 py-1 rounded-full font-medium"
+                  style={{ background: TYPE_COLORS[selectedEvent.type] + '20', color: TYPE_COLORS[selectedEvent.type] }}
+                >
+                  {TYPE_LABELS[selectedEvent.type] || selectedEvent.type}
+                </span>
+
+                {/* Boutons actions RDV */}
+                {selectedEvent.type === 'rdv' && !confirmClient && (
+                  <div className="flex flex-col gap-2 pt-2">
+                    <button onClick={handleCreateLead}
+                      className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    >
+                      <UserPlus size={15} /> 👤 Créer un lead
+                    </button>
+                    <button onClick={() => setConfirmClient(true)}
+                      className="flex items-center justify-center gap-2 bg-violet-50 hover:bg-violet-100 text-violet-700 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    >
+                      <UserCheck size={15} /> ⭐ Convertir en client
+                    </button>
+                  </div>
+                )}
+
+                {/* Confirmation client */}
+                {confirmClient && (
+                  <div className="bg-violet-50 rounded-xl p-4 space-y-3">
+                    <p className="text-sm text-violet-800 font-medium">
+                      Créer le client "{selectedEvent.title.replace('RDV — ', '').replace('RDV - ', '').trim()}" ?
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setConfirmClient(false)}
+                        className="flex-1 border border-gray-200 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-50"
+                      >Annuler</button>
+                      <button onClick={handleConvertToClient}
+                        className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-2 rounded-lg text-sm font-semibold"
+                      >Confirmer</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="p-6 border-t border-gray-100">
+                <button onClick={handleDeleteEvent}
+                  className="w-full border border-red-200 text-red-600 hover:bg-red-50 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                >
+                  🗑 Supprimer l'événement
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal Sync Google Calendar */}
       <AnimatePresence>
