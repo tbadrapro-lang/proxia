@@ -36,10 +36,14 @@ export default function Factures({ crm }) {
     const timer = setTimeout(async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('*')
-        .or(`nom.ilike.%${clientQuery}%,entreprise.ilike.%${clientQuery}%`)
+        .select('id, nom, prenom, entreprise, email, telephone')
+        .or(
+          'nom.ilike.%' + clientQuery + '%,' +
+          'entreprise.ilike.%' + clientQuery + '%,' +
+          'prenom.ilike.%' + clientQuery + '%'
+        )
         .limit(10);
-      console.log('Clients trouvés:', data, error);
+      console.log('Résultat recherche client:', data, error);
       if (error) console.error('[Factures][searchClients] error:', error);
       setClientSuggestions(data || []);
       setShowSuggestions(true);

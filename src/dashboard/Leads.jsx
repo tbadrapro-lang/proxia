@@ -147,15 +147,18 @@ export default function Leads({ crm }) {
 
   // Lead → Client (via Supabase)
   const handleConvert = async (lead) => {
-    const { data: newClient, error } = await supabase.from('clients').insert({
+    const payload = {
       nom: lead.nom,
-      telephone: lead.telephone,
-      email: lead.email,
-      adresse: lead.ville,
+      entreprise: lead.commerce || null,
+      telephone: lead.telephone || null,
+      email: lead.email || null,
+      adresse: null,
+      ville: lead.ville || null,
       statut: 'actif',
-      notes: lead.notes,
-    }).select().single();
-    console.log('[Leads][convert→client]', lead, newClient, error);
+      notes: lead.notes || null,
+    };
+    const { data: newClient, error } = await supabase.from('clients').insert(payload).select().single();
+    console.log('[Leads][Convert] client créé:', newClient, error);
     if (error) { toast.error('Erreur conversion : ' + error.message); return; }
     await supabase.from('leads').update({ statut: 'client' }).eq('id', lead.id);
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, statut: 'client' } : l));

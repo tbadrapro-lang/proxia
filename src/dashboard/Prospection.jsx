@@ -311,14 +311,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       ville: extraitVille(selected.formatted_address || selected.vicinity || ''),
       type_commerce: selected.types?.[0] || 'autre',
       canal: 'prospection_ia',
-      score: score || 50,
       statut: 'nouveau',
+      score: score || 50,
       notes: `Score Proxia: ${score} · ${selected.rating ? selected.rating + '★' : ''} · ${selected.user_ratings_total || 0} avis · ${selected.website ? 'Avec site' : '🚨 SANS SITE'} · place_id: ${selected.place_id}`,
-      created_at: new Date().toISOString(),
     };
 
+    console.log('[Prospection][AddCRM] payload:', payload);
     const { data, error } = await supabase.from('leads').insert([payload]).select();
-    console.log('[Prospection][handleAddToCRM]', payload, data, error);
+    console.log('[Prospection][AddCRM] result:', data, error);
 
     if (error) {
       toast.error('Erreur : ' + error.message);
