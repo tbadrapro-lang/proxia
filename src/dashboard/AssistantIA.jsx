@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Calendar, ExternalLink } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 const API_KEY = 'AIzaSyApzkyeI2GsaNSLM3W8xdfw7bOVl5lAP9c';
 const CALENDLY_URL = 'https://calendly.com/tbadrapro/appel-decouverte-gratuit';
@@ -19,11 +20,50 @@ Si Badra (ou un client) demande un rendez-vous, propose explicitement de réserv
 Réponds toujours en français, de manière directe et actionnable. Sois concis et opérationnel.`;
 
 const SUGGESTIONS = [
-  'Rédige un message de relance pour un lead',
-  'Aide-moi à préparer un devis',
-  'Comment je prospecte un restaurant ?',
-  'Analyse mon CA du mois',
+  '📋 Qui relancer aujourd\'hui ?',
+  '📅 Mes RDV du jour ?',
+  '💰 Mes factures en attente ?',
+  '🎯 Conseil de prospection',
 ];
+
+function buildSystemContext(ctx) {
+  if (!ctx) return '';
+  const parts = ['\n\n=== CONTEXTE BUSINESS LIVE (Supabase) ==='];
+  parts.push(`Total leads: ${ctx.countLeads ?? 0} | Total clients: ${ctx.countClients ?? 0}`);
+
+  if (ctx.leads?.length) {
+    parts.push('\nDerniers leads (max 20) :');
+    ctx.leads.forEach(l => {
+      parts.push(`- ${l.nom || 'Sans nom'} (${l.type || '?'}, ${l.adresse || '?'}) — statut: ${l.status || 'nouveau'} — ajouté: ${l.created_at?.slice(0, 10) || '?'}`);
+    });
+  }
+
+  if (ctx.agendaToday?.length) {
+    parts.push('\nAgenda du jour :');
+    ctx.agendaToday.forEach(a => {
+      parts.push(`- ${a.titre || a.title || 'Événement'} (type: ${a.type || '?'}) — ${a.date_debut || '?'} → ${a.date_fin || '?'}`);
+    });
+  } else {
+    parts.push('\nAgenda du jour : aucun événement.');
+  }
+
+  if (ctx.facturesAttente?.length) {
+    parts.push('\nFactures en attente :');
+    ctx.facturesAttente.forEach(f => {
+      parts.push(`- Facture ${f.id || ''} client ${f.client_nom || f.client || '?'} montant ${f.montant || f.total || '?'}€`);
+    });
+  }
+
+  if (ctx.appelsRelance?.length) {
+    parts.push('\nAppels nécessitant relance (J+2/J+5/J+10) :');
+    ctx.appelsRelance.forEach(a => {
+      parts.push(`- ${a.nom_lead || a.lead_nom || '?'} — résultat: ${a.resultat} — date appel: ${a.date_appel?.slice(0, 10) || '?'}`);
+    });
+  }
+
+  parts.push('\nUtilise ces données réelles pour répondre. Cite les noms et chiffres exacts.');
+  return parts.join('\n');
+}
 
 export default function AssistantIA({ crm }) {
   const [messages, setMessages] = useState([
@@ -34,11 +74,46 @@ export default function AssistantIA({ crm }) {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [context, setContext] = useState(null);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Charge le contexte Supabase au mount
+  useEffect(() => {
+    const loadContext = async () => {
+      try {
+        const todayISO = new Date().toISOString().slice(0, 10);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowISO = tomorrow.toISOString().slice(0, 10);
+
+        const [leadsRes, agendaRes, facturesRes, appelsRes, leadsCountRes, clientsCountRes] = await Promise.all([
+          supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(20),
+          supabase.from('agenda').select('*').gte('date_debut', todayISO).lt('date_debut', tomorrowISO),
+          supabase.from('factures').select('*').eq('statut', 'en_attente'),
+          supabase.from('appels').select('*').in('resultat', ['relance_j2', 'relance_j5', 'relance_j10']),
+          supabase.from('leads').select('*', { count: 'exact', head: true }),
+          supabase.from('clients').select('*', { count: 'exact', head: true }),
+        ]);
+
+        setContext({
+          leads: leadsRes.data || [],
+          agendaToday: agendaRes.data || [],
+          facturesAttente: facturesRes.data || [],
+          appelsRelance: appelsRes.data || [],
+          countLeads: leadsCountRes.count || 0,
+          countClients: clientsCountRes.count || 0,
+        });
+      } catch (err) {
+        console.warn('AssistantIA context load error:', err?.message);
+        setContext({});
+      }
+    };
+    loadContext();
+  }, []);
 
   const sendMessage = async (text) => {
     const userMsg = text || input.trim();
@@ -59,7 +134,7 @@ export default function AssistantIA({ crm }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            system_instruction: { parts: [{ text: SYSTEM_PROMPT + buildSystemContext(context) }] },
             contents: [
               ...history,
               { role: 'user', parts: [{ text: userMsg }] },

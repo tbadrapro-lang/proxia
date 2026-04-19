@@ -1,9 +1,15 @@
+import { useEffect } from 'react';
 import { Users, FileText, Clock, Euro, Calendar, ExternalLink } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatDate, STATUT_LEAD_COLORS, STATUT_LEAD_LABELS } from '../utils/crm';
+import { requestNotificationPermission } from '../lib/notifications';
 
 export default function DashboardHome({ crm }) {
   const { leads, clients, devis, factures, getCATotal, getCAParMois } = crm;
+
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   const caTotal = getCATotal();
   const devisNonSignes = devis.filter(d => d.statut === 'envoyé' || d.statut === 'brouillon').length;

@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === Theme variables (mode sombre par défaut) === */
+:root {
+  --bg-primary: #0F172A;
+  --text-primary: #1E293B;
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+html.light {
+  --bg-primary: #FFFFFF;
+  --text-primary: #0F172A;
+  --border-color: rgba(15, 23, 42, 0.1);
+}
+html.light body { background: #FFFFFF; }
+
 * { box-sizing: border-box; font-family: 'DM Sans', sans-serif; }
 html { scroll-behavior: smooth; }
 body { color: #1E293B; margin: 0; }

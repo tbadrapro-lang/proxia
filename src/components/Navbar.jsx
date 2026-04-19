@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom'; // Link utilisé pour /services
 import { Menu, X, Phone } from 'lucide-react';
 import RippleButton from './RippleButton';
+import CalendlyButton from './CalendlyButton';
 
 const scrollTo = (id) => {
   const el = document.getElementById(id);
@@ -165,16 +166,10 @@ export default function Navbar() {
               06 74 31 45 75
             </a>
 
-            {/* Bouton RDV → Calendly */}
-            <a
-              href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <RippleButton className="bg-amber-400 hover:bg-amber-500 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">
-                Réserver un appel
-              </RippleButton>
-            </a>
+            {/* Bouton RDV → Calendly (pop-up widget) */}
+            <CalendlyButton className="bg-amber-400 hover:bg-amber-500 text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">
+              Réserver un appel
+            </CalendlyButton>
           </div>
 
           {/* Hamburger mobile */}
@@ -242,16 +237,9 @@ export default function Navbar() {
                   >
                     <Phone size={14} /> 06 74 31 45 75
                   </a>
-                  <a
-                    href="https://calendly.com/tbadrapro/appel-decouverte-gratuit"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    <RippleButton className="bg-amber-400 text-white text-sm font-semibold px-4 py-2.5 rounded-full w-full">
-                      Réserver un appel gratuit
-                    </RippleButton>
-                  </a>
+                  <CalendlyButton className="bg-amber-400 text-white text-sm font-semibold px-4 py-2.5 rounded-full w-full">
+                    Réserver un appel gratuit
+                  </CalendlyButton>
                 </div>
 
               </div>

@@ -147,6 +147,25 @@ export default function Footer() {
               </li>
             ))}
           </ul>
+
+          <p className="text-white/70 font-semibold text-sm uppercase tracking-wider mt-8 mb-4">Secteurs</p>
+          <ul className="space-y-3">
+            {[
+              { slug: 'restaurant-clichy',   label: 'Restaurant Clichy' },
+              { slug: 'restaurant-asnieres', label: 'Restaurant Asnières' },
+              { slug: 'coiffeur-clichy',     label: 'Coiffeur Clichy' },
+              { slug: 'coiffeur-asnieres',   label: 'Coiffeur Asnières' },
+              { slug: 'garage-saint-denis',  label: 'Garage Saint-Denis' },
+              { slug: 'esthetique-clichy',   label: 'Esthétique Clichy' },
+            ].map(s => (
+              <li key={s.slug}>
+                <Link to={`/secteur/${s.slug}`}
+                  className="text-white/40 hover:text-violet-400 text-sm transition-colors">
+                  {s.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Entreprise */}

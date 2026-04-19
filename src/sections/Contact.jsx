@@ -4,6 +4,7 @@ import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
 import { Send, Phone, Mail, Calendar, CheckCircle } from 'lucide-react';
 import RippleButton from '../components/RippleButton';
+import CalendlyButton from '../components/CalendlyButton';
 
 const CALENDLY_URL = 'https://calendly.com/tbadrapro/appel-decouverte-gratuit';
 
@@ -117,16 +118,13 @@ export default function Contact() {
             <span className="text-green-400 text-xs font-medium">Répond en moins de 2h</span>
           </div>
 
-          {/* Bouton Calendly */}
-          <a
-            href={CALENDLY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Bouton Calendly (widget pop-up) */}
+          <CalendlyButton
+            url={CALENDLY_URL}
             className="inline-flex items-center gap-2 px-6 py-3 bg-amber-400 hover:bg-amber-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/25"
           >
-            <Calendar className="w-4 h-4" />
-            Prendre RDV gratuit — Calendly
-          </a>
+            📅 Prendre RDV gratuit — Calendly
+          </CalendlyButton>
         </motion.div>
 
         {/* ===== QUICK FORM — "Je veux être rappelé" ===== */}

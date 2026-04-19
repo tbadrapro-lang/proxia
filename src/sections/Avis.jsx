@@ -1,7 +1,18 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
-const avis = [
+const AVATAR_COLORS = [
+  'from-orange-500 to-amber-500',
+  'from-pink-500 to-violet-500',
+  'from-blue-500 to-cyan-500',
+  'from-violet-500 to-indigo-500',
+  'from-emerald-500 to-teal-500',
+  'from-rose-500 to-fuchsia-500',
+];
+
+const avisStatic = [
   {
     nom: 'Martin D.',
     commerce: 'Restaurant à Clichy',
@@ -47,6 +58,36 @@ function Stars({ note }) {
 }
 
 export default function Avis() {
+  const [avis, setAvis] = useState(avisStatic);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('avis')
+          .select('id, nom, commerce, note, texte, visible, source')
+          .eq('visible', true)
+          .order('id', { ascending: false })
+          .limit(8);
+        if (cancelled || error || !data || data.length === 0) return;
+        const mapped = data.map((row, i) => ({
+          nom: row.nom || 'Client',
+          commerce: row.commerce || '',
+          note: row.note || 5,
+          texte: row.texte || '',
+          avatar: (row.nom || 'C').trim().charAt(0).toUpperCase(),
+          color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+          source: row.source,
+        }));
+        setAvis(mapped);
+      } catch {
+        /* fallback statique conservé */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <section className="w-full py-20 md:py-28 bg-[#0A0F1E]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

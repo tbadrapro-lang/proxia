@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Star, MessageSquare, Phone, Mail, Calendar, Heart,
          Users, BarChart3, Image, FileText, Bot, Zap, CreditCard, Share2 } from 'lucide-react';
 import RippleButton from '../components/RippleButton';
+import CalendlyButton from '../components/CalendlyButton';
 
 const categories = [
   {
@@ -107,6 +108,9 @@ export default function ServicesPage() {
                 className="bg-amber-400 hover:bg-amber-500 text-white text-sm font-semibold px-5 py-2 rounded-full">
                 Demander un devis gratuit
               </RippleButton>
+              <CalendlyButton className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors">
+                📅 Réserver un appel
+              </CalendlyButton>
             </div>
           </motion.div>
         </div>

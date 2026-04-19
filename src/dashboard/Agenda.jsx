@@ -1,292 +1,202 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDate, isSameDay } from '../utils/crm';
+import { X, Link2, RefreshCw } from 'lucide-react';
+import toast from 'react-hot-toast';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import { supabase } from '../lib/supabaseClient';
 
 const TYPE_COLORS = {
-  rdv_audit: 'bg-violet-500',
-  livraison: 'bg-green-500',
-  relance: 'bg-amber-500',
-  appel: 'bg-blue-500',
+  rdv: '#7C3AED',
+  relance: '#F59E0B',
+  livraison: '#10B981',
 };
 
 const TYPE_LABELS = {
-  rdv_audit: 'RDV Audit',
-  livraison: 'Livraison',
+  rdv: 'RDV',
   relance: 'Relance',
-  appel: 'Appel',
+  livraison: 'Livraison',
 };
 
-const STATUT_LABELS = {
-  planifié: 'Planifié',
-  fait: 'Fait',
-  annulé: 'Annulé',
-};
+export default function Agenda() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
-const EMPTY_FORM = {
-  titre: '', type: 'rdv_audit', clientNom: '',
-  date: new Date().toISOString().split('T')[0],
-  heure: '10:00', notes: '', statut: 'planifié',
-};
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('agenda')
+      .select('*')
+      .order('date_debut', { ascending: true });
+    if (error) {
+      toast.error('Erreur chargement agenda');
+      setEvents([]);
+    } else {
+      setEvents(
+        (data || []).map((row) => ({
+          id: String(row.id),
+          title: row.titre || 'Événement',
+          start: row.date_debut,
+          end: row.date_fin || row.date_debut,
+          backgroundColor: TYPE_COLORS[row.type] || '#7C3AED',
+          borderColor: TYPE_COLORS[row.type] || '#7C3AED',
+          extendedProps: {
+            description: row.description || '',
+            type: row.type || 'rdv',
+          },
+        }))
+      );
+    }
+    setLoading(false);
+  }, []);
 
-const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-const MOIS_LABELS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  useEffect(() => {
+    fetchEvents();
+    const channel = supabase
+      .channel('agenda-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'agenda' }, () => fetchEvents())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchEvents]);
 
-export default function Agenda({ crm }) {
-  const { agenda, addEvent, updateEvent, deleteEvent } = crm;
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const handleDateClick = async (arg) => {
+    const titre = window.prompt('Titre de l\'événement ?');
+    if (!titre) return;
+    const type = window.prompt('Type ? (rdv / relance / livraison)', 'rdv') || 'rdv';
+    const description = window.prompt('Description (optionnel) ?') || '';
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+    const start = arg.dateStr.length === 10
+      ? `${arg.dateStr}T10:00:00`
+      : arg.dateStr;
+    const startDate = new Date(start);
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
-  const today = new Date();
-  const todayEvents = agenda.filter(e => isSameDay(e.date, today.toISOString()));
-
-  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
-
-  const getEventsForDay = (day) => {
-    const d = new Date(year, month, day);
-    return agenda.filter(e => isSameDay(e.date, d.toISOString()));
+    const { error } = await supabase.from('agenda').insert({
+      titre,
+      type: ['rdv', 'relance', 'livraison'].includes(type) ? type : 'rdv',
+      description,
+      date_debut: startDate.toISOString(),
+      date_fin: endDate.toISOString(),
+    });
+    if (error) toast.error('Erreur création : ' + error.message);
+    else toast.success('✅ Événement ajouté');
   };
 
-  const handleAdd = () => {
-    if (!form.titre || !form.date) return;
-    addEvent({ ...form, date: new Date(form.date).toISOString() });
-    setForm(EMPTY_FORM);
-    setShowModal(false);
+  const handleEventClick = async (info) => {
+    const ok = window.confirm(`Supprimer "${info.event.title}" ?`);
+    if (!ok) return;
+    const { error } = await supabase.from('agenda').delete().eq('id', info.event.id);
+    if (error) toast.error('Erreur suppression');
+    else toast.success('Événement supprimé');
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-          <p className="text-gray-500 text-sm">{todayEvents.length} événement(s) aujourd'hui</p>
+          <p className="text-gray-500 text-sm">
+            {loading ? 'Chargement...' : `${events.length} événement(s)`} · Cliquez sur une date pour ajouter
+          </p>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-        >
-          <Plus size={16} /> Événement
-        </button>
-      </div>
-
-      {/* Aujourd'hui */}
-      {todayEvents.length > 0 && (
-        <div className="mb-6 bg-violet-50 border border-violet-100 rounded-2xl p-4">
-          <p className="text-xs font-semibold text-violet-600 uppercase tracking-wide mb-3">Aujourd'hui</p>
-          <div className="space-y-2">
-            {todayEvents.map(e => (
-              <div key={e.id} className="flex items-center gap-3 bg-white rounded-xl p-3">
-                <div className={`w-2 h-2 rounded-full ${TYPE_COLORS[e.type] || 'bg-gray-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{e.heure} · {e.titre}</p>
-                  {e.clientNom && <p className="text-xs text-gray-500">{e.clientNom}</p>}
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  e.statut === 'fait' ? 'bg-green-100 text-green-700' :
-                  e.statut === 'annulé' ? 'bg-gray-100 text-gray-500' :
-                  'bg-amber-100 text-amber-700'
-                }`}>
-                  {STATUT_LABELS[e.statut]}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Calendrier */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        {/* Navigation */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <ChevronLeft size={16} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchEvents}
+            className="flex items-center gap-2 bg-white border border-gray-200 hover:border-violet-300 text-gray-700 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+          >
+            <RefreshCw size={14} /> Rafraîchir
           </button>
-          <h2 className="font-semibold text-gray-900">
-            {MOIS_LABELS[month]} {year}
-          </h2>
-          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <ChevronRight size={16} />
+          <button
+            onClick={() => setShowSyncModal(true)}
+            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          >
+            <Link2 size={15} /> 🔗 Sync Google Calendar
           </button>
-        </div>
-
-        {/* Jours de la semaine */}
-        <div className="grid grid-cols-7 border-b border-gray-100">
-          {JOURS.map(j => (
-            <div key={j} className="text-center text-xs font-medium text-gray-400 py-2">{j}</div>
-          ))}
-        </div>
-
-        {/* Grille du mois */}
-        <div className="grid grid-cols-7">
-          {Array.from({ length: startOffset }).map((_, i) => (
-            <div key={`empty-${i}`} className="h-16 border-r border-b border-gray-50" />
-          ))}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1;
-            const dayDate = new Date(year, month, day);
-            const isToday = isSameDay(dayDate.toISOString(), today.toISOString());
-            const events = getEventsForDay(day);
-            return (
-              <div
-                key={day}
-                onClick={() => setSelectedDay(day)}
-                className={`h-16 border-r border-b border-gray-50 p-1 cursor-pointer hover:bg-gray-50 transition-colors ${
-                  isToday ? 'bg-violet-50' : ''
-                }`}
-              >
-                <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${
-                  isToday ? 'bg-violet-600 text-white' : 'text-gray-700'
-                }`}>
-                  {day}
-                </span>
-                <div className="flex gap-0.5 flex-wrap mt-0.5">
-                  {events.slice(0, 3).map(e => (
-                    <div key={e.id} className={`w-1.5 h-1.5 rounded-full ${TYPE_COLORS[e.type] || 'bg-gray-400'}`} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
 
       {/* Légende */}
-      <div className="flex gap-4 mt-4 flex-wrap">
+      <div className="flex gap-4 mb-4 flex-wrap">
         {Object.entries(TYPE_LABELS).map(([k, v]) => (
           <div key={k} className="flex items-center gap-1.5">
-            <div className={`w-2 h-2 rounded-full ${TYPE_COLORS[k]}`} />
-            <span className="text-xs text-gray-500">{v}</span>
+            <div className="w-3 h-3 rounded" style={{ background: TYPE_COLORS[k] }} />
+            <span className="text-xs text-gray-600">{v}</span>
           </div>
         ))}
       </div>
 
-      {/* Drawer événements du jour */}
-      <AnimatePresence>
-        {selectedDay !== null && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-50" onClick={() => setSelectedDay(null)} />
-            <motion.aside
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-white z-50 shadow-2xl flex flex-col"
-            >
-              <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                <h2 className="font-bold text-gray-900">
-                  {selectedDay} {MOIS_LABELS[month]} {year}
-                </h2>
-                <button onClick={() => setSelectedDay(null)}><X size={20} className="text-gray-400" /></button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-5">
-                {getEventsForDay(selectedDay).length === 0 ? (
-                  <p className="text-gray-400 text-sm text-center py-8">Aucun événement ce jour</p>
-                ) : (
-                  <div className="space-y-3">
-                    {getEventsForDay(selectedDay).map(e => (
-                      <div key={e.id} className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${TYPE_COLORS[e.type]}`} />
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">{e.heure} · {e.titre}</p>
-                              {e.clientNom && <p className="text-xs text-gray-500">{e.clientNom}</p>}
-                            </div>
-                          </div>
-                          <button onClick={() => deleteEvent(e.id)} className="text-gray-300 hover:text-red-400">
-                            <X size={14} />
-                          </button>
-                        </div>
-                        {e.notes && <p className="text-xs text-gray-500 mt-2">{e.notes}</p>}
-                        <div className="flex gap-2 mt-3">
-                          {['planifié', 'fait', 'annulé'].map(s => (
-                            <button key={s}
-                              onClick={() => updateEvent(e.id, { statut: s })}
-                              className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
-                                e.statut === s ? 'bg-violet-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-violet-300'
-                              }`}
-                            >
-                              {STATUT_LABELS[s]}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="p-5 border-t border-gray-100">
-                <button
-                  onClick={() => {
-                    setForm({ ...EMPTY_FORM, date: new Date(year, month, selectedDay).toISOString().split('T')[0] });
-                    setSelectedDay(null);
-                    setShowModal(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                >
-                  <Plus size={15} /> Ajouter un événement ce jour
-                </button>
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Calendrier */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+          }}
+          locale="fr"
+          buttonText={{
+            today: "Aujourd'hui",
+            month: 'Mois',
+            week: 'Semaine',
+            day: 'Jour',
+          }}
+          firstDay={1}
+          height="auto"
+          events={events}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          editable={false}
+          selectable
+        />
+      </div>
 
-      {/* Modal création événement */}
+      {/* Modal Sync Google Calendar */}
       <AnimatePresence>
-        {showModal && (
+        {showSyncModal && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-            onClick={e => e.target === e.currentTarget && setShowModal(false)}
+            onClick={(e) => e.target === e.currentTarget && setShowSyncModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
               className="bg-white rounded-2xl w-full max-w-md shadow-2xl"
             >
               <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                <h2 className="font-bold text-gray-900 text-lg">Nouvel événement</h2>
-                <button onClick={() => setShowModal(false)}><X size={20} className="text-gray-400" /></button>
+                <h2 className="font-bold text-gray-900 text-lg">🔗 Sync Google Calendar</h2>
+                <button onClick={() => setShowSyncModal(false)}>
+                  <X size={20} className="text-gray-400" />
+                </button>
               </div>
-              <div className="p-6 space-y-4">
-                {[
-                  { label: 'Titre *', key: 'titre', type: 'text' },
-                  { label: 'Client', key: 'clientNom', type: 'text' },
-                  { label: 'Date', key: 'date', type: 'date' },
-                  { label: 'Heure', key: 'heure', type: 'time' },
-                  { label: 'Notes', key: 'notes', type: 'text' },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                    <input type={f.type} value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    />
-                  </div>
-                ))}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  >
-                    {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                </div>
+              <div className="p-6">
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Pour synchroniser avec Google Calendar, contactez le support Proxia.
+                </p>
+                <a
+                  href="mailto:tbadrapro@gmail.com?subject=Sync%20Google%20Calendar"
+                  className="mt-4 inline-block text-violet-600 hover:underline text-sm font-medium"
+                >
+                  tbadrapro@gmail.com
+                </a>
               </div>
-              <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button onClick={() => setShowModal(false)}
-                  className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
-                >Annuler</button>
-                <button onClick={handleAdd} disabled={!form.titre}
-                  className="flex-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
-                >Ajouter</button>
+              <div className="p-6 border-t border-gray-100">
+                <button
+                  onClick={() => setShowSyncModal(false)}
+                  className="w-full bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Compris
+                </button>
               </div>
             </motion.div>
           </motion.div>

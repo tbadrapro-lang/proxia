@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Phone, MessageCircle, UserCheck, ChevronRight, AlertCircle, Upload, RefreshCw, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
+import { sendNotification } from '../lib/notifications';
 import { formatDate, addDays, isOverdue, STATUT_LEAD_COLORS, STATUT_LEAD_LABELS } from '../utils/crm';
 
 const EMPTY_FORM = {
@@ -78,14 +79,21 @@ export default function Leads({ crm }) {
     setLoading(false);
   };
 
-  // Abonnement temps réel
+  // Abonnement temps réel + notification push sur INSERT
   useEffect(() => {
     fetchLeads();
     const channel = supabase
       .channel('leads-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, (payload) => {
+        const lead = payload.new || {};
+        sendNotification(
+          '🎯 Nouveau lead !',
+          `${lead.nom || 'Sans nom'} — ${lead.type || 'Commerce'} (${lead.adresse || 'Ville ?'})`
+        );
         fetchLeads();
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'leads' }, () => fetchLeads())
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'leads' }, () => fetchLeads())
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, []);

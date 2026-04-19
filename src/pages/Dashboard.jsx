@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard, UserSearch, Users, FileText, Receipt,
-  Calendar, Bot, LogOut, Menu, Target, Download, Crosshair, ClipboardList
+  Calendar, Bot, LogOut, Menu, Target, Download, Crosshair, ClipboardList,
+  Sun, Moon
 } from 'lucide-react';
 import useCRM from '../hooks/useCRM';
 import DashboardHome from '../dashboard/DashboardHome';
@@ -140,7 +141,19 @@ export default function Dashboard() {
   const [authed, setAuthed] = useState(() => localStorage.getItem(PIN_KEY) === CORRECT_PIN);
   const [activeView, setActiveView] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('proxia-theme') || 'dark');
   const crm = useCRM();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+    localStorage.setItem('proxia-theme', theme);
+    return () => {
+      // Au démontage du dashboard on retire le thème pour ne pas polluer le site vitrine
+      document.documentElement.classList.remove('light');
+    };
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const VIEWS = {
     home: DashboardHome,
@@ -171,10 +184,17 @@ export default function Dashboard() {
           <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center">
             <span className="text-white font-black text-lg">P</span>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-sm">Proxia CRM</p>
             <p className="text-gray-400 text-xs">Badra Traoré</p>
           </div>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white flex items-center justify-center transition-colors"
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
         </div>
       </div>
 

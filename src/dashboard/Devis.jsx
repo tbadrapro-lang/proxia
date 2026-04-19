@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Eye, Copy, Trash2, Search } from 'lucide-react';
+import { Plus, X, Eye, Copy, Trash2, Search, CheckCircle2 } from 'lucide-react';
+import SignatureCanvas from 'react-signature-canvas';
 import { formatDate } from '../utils/crm';
 import { supabase } from '../lib/supabaseClient';
 
@@ -21,7 +22,7 @@ const EMPTY_LIGNE = { description: '', quantite: 1, prixUnitaire: 0 };
 const EMPTY_FORM = {
   clientNom: '', clientEmail: '', clientCommerce: '', clientVille: '',
   lignes: [{ ...EMPTY_LIGNE }],
-  notes: '', statut: 'brouillon',
+  notes: '', statut: 'brouillon', signatureData: null,
 };
 
 const STATUT_COLORS = {
@@ -145,6 +146,8 @@ export default function Devis({ crm }) {
   const [clientSuggestions, setClientSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef(null);
+  const sigPadRef = useRef(null);
+  const [signatureValid, setSignatureValid] = useState(false);
 
   useEffect(() => {
     if (clientQuery.length < 2) { setClientSuggestions([]); return; }
@@ -185,6 +188,27 @@ export default function Devis({ crm }) {
     setShowModal(false);
     setClientQuery('');
     setForm(EMPTY_FORM);
+    setSignatureValid(false);
+    sigPadRef.current?.clear?.();
+  };
+
+  const clearSignature = () => {
+    sigPadRef.current?.clear?.();
+    setSignatureValid(false);
+    setForm((p) => ({ ...p, signatureData: null }));
+  };
+
+  const validateSignature = () => {
+    if (!sigPadRef.current || sigPadRef.current.isEmpty?.()) {
+      setSignatureValid(false);
+      setForm((p) => ({ ...p, signatureData: null }));
+      return;
+    }
+    const data = sigPadRef.current.getTrimmedCanvas
+      ? sigPadRef.current.getTrimmedCanvas().toDataURL('image/png')
+      : sigPadRef.current.toDataURL('image/png');
+    setForm((p) => ({ ...p, signatureData: data, statut: 'signé' }));
+    setSignatureValid(true);
   };
 
   const total = calcTotal(form.lignes);
@@ -200,7 +224,7 @@ export default function Devis({ crm }) {
 
   const handleCreate = () => {
     if (!form.clientNom) return;
-    addDevis({ ...form, total, sousTotal: total, tva: 0 });
+    addDevis({ ...form, total, sousTotal: total, tva: 0, signatureData: form.signatureData });
     resetModal();
   };
 
@@ -246,6 +270,11 @@ export default function Devis({ crm }) {
                   </div>
                   <p className="font-medium text-gray-900 mt-0.5">{d.clientNom}</p>
                   <p className="text-xs text-gray-500">{formatDate(d.dateCreation)} · Valide jusqu'au {formatDate(d.dateValidite)}</p>
+                  {d.signatureData && (
+                    <span className="inline-flex items-center gap-1 mt-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                      <CheckCircle2 size={11} /> Devis signé électroniquement
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-lg font-bold text-gray-900">{d.total?.toLocaleString('fr-FR')} €</span>
@@ -404,6 +433,41 @@ export default function Devis({ crm }) {
                     <span className="font-semibold text-gray-700">Total TTC (TVA 0%)</span>
                     <span className="text-xl font-bold text-violet-600">{total.toLocaleString('fr-FR')} €</span>
                   </div>
+                </div>
+
+                {/* Signature électronique */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Signature client (optionnel)</p>
+                  <div className="border border-gray-200 rounded-xl bg-gray-50 p-2">
+                    <SignatureCanvas
+                      ref={sigPadRef}
+                      penColor="#1E293B"
+                      canvasProps={{
+                        className: 'w-full h-32 bg-white rounded-lg border border-dashed border-gray-300',
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={clearSignature}
+                      className="flex-1 border border-gray-200 text-gray-700 py-2 rounded-lg text-xs font-medium hover:bg-gray-50"
+                    >
+                      Effacer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={validateSignature}
+                      className="flex-1 bg-violet-600 hover:bg-violet-700 text-white py-2 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Valider la signature
+                    </button>
+                  </div>
+                  {signatureValid && (
+                    <p className="mt-2 inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+                      <CheckCircle2 size={12} /> Devis signé électroniquement
+                    </p>
+                  )}
                 </div>
 
                 {/* Notes */}

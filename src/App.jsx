@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Home         from "./pages/Home";
 import ServicesPage from "./pages/ServicesPage";
+import SecteurPage  from "./pages/secteurs/SecteurPage";
 import Dashboard    from "./pages/Dashboard";
 import Layout       from "./components/Layout";
 
@@ -18,9 +19,10 @@ export default function App() {
           element={
             <Layout>
               <Routes>
-                <Route path="/"         element={<Home />} />
-                <Route path="/services" element={<ServicesPage />} />
-                <Route path="*"         element={<Navigate to="/" replace />} />
+                <Route path="/"               element={<Home />} />
+                <Route path="/services"       element={<ServicesPage />} />
+                <Route path="/secteur/:slug"  element={<SecteurPage />} />
+                <Route path="*"               element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>
           }
