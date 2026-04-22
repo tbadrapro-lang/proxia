@@ -7,15 +7,27 @@ import { supabase } from '../lib/supabaseClient';
 const GEMINI_KEY = 'AIzaSyApzkyeI2GsaNSLM3W8xdfw7bOVl5lAP9c';
 
 function calculerScore(commerce) {
+  // website === undefined = pas encore enrichi (nearbysearch ne le retourne pas)
+  // website === null     = enrichi, pas de site → PRIORITÉ
+  // website === ''       = enrichi, pas de site → PRIORITÉ
+  // website = 'http...'  = a un site → score bas
+  const websiteConnu = commerce.websiteEnrichi === true;
+  const aSite = websiteConnu && !!commerce.website;
+
   let score = 0;
-  if (!commerce.website) score += 35;
+  if (websiteConnu && !aSite) score += 40; // confirmé sans site
+  else if (!websiteConnu) score += 20;     // pas encore vérifié (neutre)
+  // si a un site → 0 points sur ce critère
+
   if (commerce.rating < 4.0) score += 20;
   else if (commerce.rating < 4.5) score += 10;
+
   if ((commerce.user_ratings_total || 0) < 50) score += 20;
   else if ((commerce.user_ratings_total || 0) < 100) score += 10;
+
   const secteursPrio = ['restaurant', 'salon', 'coiffure', 'garage', 'kebab', 'traiteur', 'esthétique', 'pressing'];
-  if (secteursPrio.some(s => (commerce.name || '').toLowerCase().includes(s))) score += 25;
-  if (!commerce.website && score < 70) score = 70;
+  if (secteursPrio.some(s => (commerce.name || '').toLowerCase().includes(s))) score += 20;
+
   return Math.min(score, 100);
 }
 
@@ -189,6 +201,36 @@ export default function Prospection() {
       }));
 
       setResults(formatted);
+
+      // Enrichissement en arrière-plan : nearbysearch ne retourne jamais "website"
+      // On appelle Place Details pour chaque commerce afin d'avoir le vrai website
+      formatted.forEach(async (commerce) => {
+        try {
+          const res = await fetch(`/api/place-details?place_id=${commerce.place_id}`);
+          const data = await res.json();
+          if (data?.result) {
+            setResults(prev => prev.map(r =>
+              r.place_id === commerce.place_id
+                ? {
+                    ...r,
+                    website: data.result.website || null,
+                    websiteEnrichi: true,
+                    formatted_phone_number: data.result.formatted_phone_number || r.formatted_phone_number || '',
+                    international_phone_number: data.result.international_phone_number || r.international_phone_number || '',
+                  }
+                : r
+            ));
+          } else {
+            // Réponse reçue mais pas de résultat → marquer comme enrichi (pas de site)
+            setResults(prev => prev.map(r =>
+              r.place_id === commerce.place_id ? { ...r, websiteEnrichi: true } : r
+            ));
+          }
+        } catch {
+          // Silencieux — websiteEnrichi reste false
+        }
+      });
+
     } catch (err) {
       const msg = 'Erreur : ' + err.message;
       setSearchError(msg);
@@ -204,8 +246,8 @@ export default function Prospection() {
     setAudit(null);
     setAuditError('');
 
-    // Récupère le téléphone via Place Details API si pas déjà connu
-    if (commerce.place_id && !commerce.formatted_phone_number) {
+    // Si le commerce n'a pas encore été enrichi via Place Details
+    if (commerce.place_id && !commerce.websiteEnrichi) {
       try {
         const res = await fetch(`/api/place-details?place_id=${commerce.place_id}`);
         const data = await res.json();
@@ -214,10 +256,28 @@ export default function Prospection() {
             ...commerce,
             formatted_phone_number: data.result.formatted_phone_number || '',
             international_phone_number: data.result.international_phone_number || '',
-            website: commerce.website || data.result.website || '',
+            website: data.result.website || null,
+            websiteEnrichi: true,
           };
           setSelected(enriched);
-          // Met à jour aussi dans la liste pour persister
+          setScore(calculerScore(enriched)); // ← recalcul avec le vrai website
+          setResults(prev => prev.map(r => r.place_id === commerce.place_id ? enriched : r));
+        }
+      } catch (err) {
+        console.error('Place details error:', err);
+      }
+    } else if (commerce.formatted_phone_number === undefined || commerce.formatted_phone_number === '') {
+      // Déjà enrichi website mais pas de téléphone en cache
+      try {
+        const res = await fetch(`/api/place-details?place_id=${commerce.place_id}`);
+        const data = await res.json();
+        if (data?.result) {
+          const enriched = {
+            ...commerce,
+            formatted_phone_number: data.result.formatted_phone_number || '',
+            international_phone_number: data.result.international_phone_number || '',
+          };
+          setSelected(enriched);
           setResults(prev => prev.map(r => r.place_id === commerce.place_id ? enriched : r));
         }
       } catch (err) {
@@ -483,9 +543,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
                             </div>
                           </div>
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {r.website
-                              ? <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">✅ Site web</span>
-                              : <span className="text-xs text-red-400 bg-red-500/15 border border-red-500/40 px-2 py-0.5 rounded-full font-semibold">🚨 SANS SITE - PRIORITÉ</span>
+                            {!r.websiteEnrichi
+                              ? <span className="text-xs text-gray-400 bg-gray-500/10 px-2 py-0.5 rounded-full">⏳ Vérification...</span>
+                              : r.website
+                                ? <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">✅ Site web</span>
+                                : <span className="text-xs text-red-400 bg-red-500/15 border border-red-500/40 px-2 py-0.5 rounded-full font-semibold">🚨 SANS SITE - PRIORITÉ</span>
                             }
                           </div>
                         </div>
