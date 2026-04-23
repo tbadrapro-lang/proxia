@@ -239,7 +239,7 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#0F172A] flex-shrink-0">
+      <aside className="hidden lg:flex flex-col w-64 bg-[#0F172A] flex-shrink-0">
         <SidebarContent />
       </aside>
 
@@ -249,13 +249,13 @@ export default function Dashboard() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
             <motion.aside
               initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed left-0 top-0 bottom-0 w-64 bg-[#0F172A] z-50 flex flex-col md:hidden"
+              className="fixed left-0 top-0 bottom-0 w-64 bg-[#0F172A] z-50 flex flex-col lg:hidden"
             >
               <SidebarContent />
             </motion.aside>
@@ -266,7 +266,7 @@ export default function Dashboard() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
             <Menu size={20} className="text-gray-700" />
           </button>
@@ -292,7 +292,7 @@ export default function Dashboard() {
         </main>
 
         {/* Mobile bottom nav — 5 premiers items */}
-        <nav className="md:hidden flex bg-white border-t border-gray-200">
+        <nav className="lg:hidden flex bg-white border-t border-gray-200">
           {[NAV_ITEMS[0], NAV_ITEMS[1], NAV_ITEMS[2], NAV_ITEMS[3], NAV_ITEMS[7]].map(item => {
             const Icon = item.icon;
             const isActive = activeView === item.id;

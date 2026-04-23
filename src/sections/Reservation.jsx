@@ -68,6 +68,7 @@ export default function Reservation() {
         phone: form.tel,
         message: form.message,
         pack: packName || 'Non précisé',
+        reply_to: 'contact@proxia-ia.fr',
       }, 'fMP5Tbm2p8wc6qQlM');
       toast.success('Rendez-vous confirmé ! On vous envoie un email de confirmation.');
       setStep(0);

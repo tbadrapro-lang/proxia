@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AvatarKone from '../components/AvatarKone';
@@ -71,6 +72,7 @@ const typeLabels = {
 
 export default function ServicesPage() {
   const navigate = useNavigate();
+
   const scrollToContact = () => {
     navigate('/');
     setTimeout(() => {
@@ -84,6 +86,15 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>Nos services IA pour commerces | Proxia IA</title>
+        <meta name="description" content="Site web, agent vocal IA, automatisation avis Google. Packs à partir de 350€. 1ère consultation gratuite." />
+        <meta property="og:title" content="Nos services IA pour commerces | Proxia IA" />
+        <meta property="og:description" content="Site web, agent vocal IA, automatisation avis Google. Packs à partir de 350€. 1ère consultation gratuite." />
+        <meta property="og:url" content="https://proxia-ia.fr/services" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://proxia-ia.fr/services" />
+      </Helmet>
       <Navbar />
 
       {/* Hero page services */}
@@ -186,7 +197,7 @@ export default function ServicesPage() {
         {/* CTA final */}
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-[#0F172A] rounded-3xl p-10 text-center">
+          className="bg-[#0F172A] rounded-3xl p-10 text-center max-w-2xl mx-auto">
           <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Sora, sans-serif' }}>
             Pas sûr de ce qu&apos;il vous faut ?
           </h2>

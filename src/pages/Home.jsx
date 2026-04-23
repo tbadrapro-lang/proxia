@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import Navbar from '../components/Navbar';
 import Hero from '../sections/Hero';
 import LogoMarquee from '../components/LogoMarquee';
@@ -17,6 +18,15 @@ import { Toaster } from 'react-hot-toast';
 export default function Home() {
   return (
     <>
+      <Helmet>
+        <title>Proxia IA — Agence IA pour commerçants locaux | Île-de-France</title>
+        <meta name="description" content="Proxia IA automatise votre présence digitale : site web, agent vocal, avis Google. Audit gratuit pour restaurants, salons et garages en Île-de-France." />
+        <meta property="og:title" content="Proxia IA — Agence IA pour commerçants locaux | Île-de-France" />
+        <meta property="og:description" content="Proxia IA automatise votre présence digitale : site web, agent vocal, avis Google. Audit gratuit pour restaurants, salons et garages en Île-de-France." />
+        <meta property="og:url" content="https://proxia-ia.fr" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://proxia-ia.fr" />
+      </Helmet>
       <Navbar />
       <main>
         <section id="accueil"><Hero /></section>

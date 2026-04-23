@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://proxia-ia.fr/sitemap.xml

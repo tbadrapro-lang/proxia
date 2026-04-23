@@ -331,10 +331,10 @@ export default function Agenda() {
                   Pour synchroniser avec Google Calendar, contactez le support Proxia.
                 </p>
                 <a
-                  href="mailto:tbadrapro@gmail.com?subject=Sync%20Google%20Calendar"
+                  href="mailto:contact@proxia-ia.fr?subject=Sync%20Google%20Calendar"
                   className="mt-4 inline-block text-violet-600 hover:underline text-sm font-medium"
                 >
-                  tbadrapro@gmail.com
+                  contact@proxia-ia.fr
                 </a>
               </div>
               <div className="p-6 border-t border-gray-100">

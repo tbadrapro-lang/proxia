@@ -56,7 +56,7 @@ function DevisPreview({ devis, onClose }) {
               </div>
               <h1 className="text-2xl font-black text-gray-900">Proxia</h1>
               <p className="text-gray-500 text-sm">Agence IA · Clichy, Île-de-France</p>
-              <p className="text-gray-500 text-sm">tbadrapro@gmail.com · 06 74 31 45 75</p>
+              <p className="text-gray-500 text-sm">contact@proxia-ia.fr · 06 74 31 45 75</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-violet-600">{devis.id}</p>
@@ -123,7 +123,7 @@ function DevisPreview({ devis, onClose }) {
           )}
 
           <p className="text-xs text-gray-400 mt-6 text-center">
-            Proxia — Auto-entrepreneur — SIRET en cours — tbadrapro@gmail.com
+            Proxia — Auto-entrepreneur — SIRET en cours — contact@proxia-ia.fr
           </p>
         </div>
         <div className="p-4 border-t border-gray-100">

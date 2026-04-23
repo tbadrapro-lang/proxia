@@ -108,7 +108,7 @@ export default function Navbar() {
           </button>
 
           {/* Liens desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
 
             {/* Ancres page d'accueil */}
             {navLinks.map(link => (
@@ -155,7 +155,7 @@ export default function Navbar() {
           </div>
 
           {/* Actions desktop */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             <a
               href="tel:+33674314575"
               className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
@@ -175,7 +175,7 @@ export default function Navbar() {
           {/* Hamburger mobile */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-violet-50"
+            className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-violet-50"
           >
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -188,7 +188,7 @@ export default function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white border-t border-violet-100 overflow-hidden"
+              className="lg:hidden bg-white border-t border-violet-100 overflow-hidden"
             >
               <div className="px-4 py-3 flex flex-col gap-1">
 

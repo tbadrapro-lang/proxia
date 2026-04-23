@@ -44,7 +44,7 @@ export default function Footer() {
                 <p className="text-white/80 font-semibold mb-1">Éditeur du site</p>
                 <p>Proxia IA — Badra Traoré</p>
                 <p>Adresse : Clichy, 92110</p>
-                <p>Email : <a href="mailto:tbadrapro@gmail.com" className="text-violet-400 hover:underline">tbadrapro@gmail.com</a></p>
+                <p>Email : <a href="mailto:contact@proxia-ia.fr" className="text-violet-400 hover:underline">contact@proxia-ia.fr</a></p>
                 <p>Tél : <a href="tel:+33674314575" className="text-violet-400 hover:underline">06 74 31 45 75</a></p>
               </div>
               <div>
@@ -54,7 +54,7 @@ export default function Footer() {
               </div>
               <div>
                 <p className="text-white/80 font-semibold mb-1">Données personnelles (RGPD)</p>
-                <p>Les données collectées via le formulaire de contact (nom, email, téléphone) sont utilisées uniquement pour vous recontacter. Elles ne sont transmises à aucun tiers. Vous pouvez exercer vos droits d'accès, de rectification et de suppression en écrivant à tbadrapro@gmail.com.</p>
+                <p>Les données collectées via le formulaire de contact (nom, email, téléphone) sont utilisées uniquement pour vous recontacter. Elles ne sont transmises à aucun tiers. Vous pouvez exercer vos droits d'accès, de rectification et de suppression en écrivant à contact@proxia-ia.fr.</p>
               </div>
               <div>
                 <p className="text-white/80 font-semibold mb-1">Propriété intellectuelle</p>
@@ -72,7 +72,7 @@ export default function Footer() {
       )}
       {/* CTA Banner */}
       <div className="bg-gradient-to-r from-violet-900/40 to-indigo-900/30 border-b border-violet-500/15">
-        <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <p className="text-xl font-black mb-1">Prêt à développer votre commerce ?</p>
             <p className="text-white/50 text-sm">Site livré en 5 jours ouvrés. Devis gratuit sous 24h.</p>
@@ -99,7 +99,7 @@ export default function Footer() {
       </div>
 
       {/* Corps du footer */}
-      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         {/* Brand */}
         <div>
           <div className="text-2xl font-black mb-3">
@@ -114,8 +114,8 @@ export default function Footer() {
             <a href="tel:+33674314575" className="text-white/50 hover:text-violet-400 text-sm transition-colors flex items-center gap-2">
               📱 06 74 31 45 75
             </a>
-            <a href="mailto:tbadrapro@gmail.com" className="text-white/50 hover:text-violet-400 text-sm transition-colors flex items-center gap-2">
-              ✉️ tbadrapro@gmail.com
+            <a href="mailto:contact@proxia-ia.fr" className="text-white/50 hover:text-violet-400 text-sm transition-colors flex items-center gap-2">
+              ✉️ contact@proxia-ia.fr
             </a>
             <p className="text-white/30 text-sm flex items-center gap-2">
               📍 Clichy · Asnières · Saint-Denis · Levallois
@@ -236,10 +236,10 @@ export default function Footer() {
       </div>
 
       {/* Copyright */}
-      <div className="border-t border-white/5 py-6 px-4">
+      <div className="border-t border-white/5 py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/25 text-xs">
-            © {year} Proxia IA. Tous droits réservés. · tbadrapro@gmail.com · 06 74 31 45 75
+            © {year} Proxia IA. Tous droits réservés. · contact@proxia-ia.fr · 06 74 31 45 75
           </p>
           <p className="text-white/20 text-xs">
             Fait avec ❤️ pour les commerçants locaux d'Île-de-France

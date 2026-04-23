@@ -40,6 +40,7 @@ export default function Contact() {
         email: '',
         ville: '',
         message: `[RAPPEL RAPIDE] ${quick.prenom} — ${quick.phone} — Commerce: ${quick.commerce || 'Non précisé'}`,
+        reply_to: 'contact@proxia-ia.fr',
       }, 'fMP5Tbm2p8wc6qQlM');
       toast.success(`Parfait ${quick.prenom} ! On vous rappelle aujourd\u0027hui 🎯`);
       setQuick(initialQuick);
@@ -66,12 +67,13 @@ export default function Contact() {
         commerce_type: form.type,
         ville: form.ville,
         message: form.message,
+        reply_to: 'contact@proxia-ia.fr',
       }, 'fMP5Tbm2p8wc6qQlM');
       toast.success('Demande envoyée ! On vous contacte sous 24h.');
       setForm(initialFull);
       setFullSent(true);
     } catch {
-      toast.error('Erreur. Contactez-nous sur tbadrapro@gmail.com');
+      toast.error('Erreur. Contactez-nous sur contact@proxia-ia.fr');
     } finally {
       setSendingFull(false);
     }
@@ -103,9 +105,9 @@ export default function Contact() {
               <Phone className="w-4 h-4" />
               <span className="text-sm font-medium">06 74 31 45 75</span>
             </a>
-            <a href="mailto:tbadrapro@gmail.com" className="flex items-center gap-2 text-violet-300 hover:text-violet-200 transition-colors">
+            <a href="mailto:contact@proxia-ia.fr" className="flex items-center gap-2 text-violet-300 hover:text-violet-200 transition-colors">
               <Mail className="w-4 h-4" />
-              <span className="text-sm font-medium">tbadrapro@gmail.com</span>
+              <span className="text-sm font-medium">contact@proxia-ia.fr</span>
             </a>
           </div>
 
