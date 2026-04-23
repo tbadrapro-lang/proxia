@@ -53,11 +53,13 @@ export default function Navbar() {
 
   const handleNavClick = (id) => {
     setMenuOpen(false);
-    if (isHome) {
-      scrollTo(id);
-    } else {
-      window.location.href = `/#${id}`;
-    }
+    setTimeout(() => {
+      if (isHome) {
+        scrollTo(id);
+      } else {
+        window.location.href = `/#${id}`;
+      }
+    }, 50);
   };
 
   // Style commun pour les liens
